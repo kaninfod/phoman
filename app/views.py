@@ -8,6 +8,6 @@ import os
 
 @app.route('/')
 def artists():
-
+    models.indexImages()
     data = "hello world"
     return render_template('home.html', data=data)
