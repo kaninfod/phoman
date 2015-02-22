@@ -1,7 +1,8 @@
 __author__ = 'martin'
-from flask import Flask, session, g
-from flask.ext.mongoengine import MongoEngine
+from flask import Flask
 from werkzeug.contrib.cache import SimpleCache
+
+from flask.ext.mongoengine import MongoEngine
 
 
 app = Flask(__name__)
@@ -12,7 +13,9 @@ db = MongoEngine(app)
 
 cache = SimpleCache()
 
-from app import views, models
+from app import views, model
+from app.model import image
+
 
 
 
