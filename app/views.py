@@ -1,13 +1,15 @@
 from flask import render_template
 
-import app.model
+
 from app import app, model
-from app.model import image
+from app.model import *
+
+
 
 
 @app.route('/')
 def artists():
-    image.indexImages()
-    model.images.test()
+    common.indexImages("/home/martin/Pictures/000 Master - Auto Backup/2014/12")
+
     data = "hello world"
     return render_template('home.html', data=data)
