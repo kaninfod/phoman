@@ -10,4 +10,4 @@ def indexImages(path):
             fn = root + "/" + filename
             img = image.image(fn)
 
-            #img.update(fn)
+def findImages():

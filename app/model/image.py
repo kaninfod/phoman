@@ -19,14 +19,27 @@ class image():
         self.size = ""
 
         try:
-            photoDate = str(self.exif["DateTimeOriginal"])
-            self.dateTaken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
-            self.make = self.exif["Make"]
-            self.model = self.exif["Model"]
-            self.path = fileName
-            self.hasEXIF = True
-            self.size = os.path.getsize(fileName)
-            self.ImageUniqueID = self.exif["ImageUniqueID"]
+            if self.exif == None:
+                self.hasEXIF = False
+                self.path = fileName
+                self.size = os.path.getsize(fileName)
+            else:
+                if "DateTimeOriginal" in self.exif:
+                    photoDate = str(self.exif["DateTimeOriginal"])
+                elif "DateTime" in self.exif:
+                    photoDate = str(self.exif["DateTime"])
+                self.dateTaken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
+
+                if "Make" in self.exif:
+                    self.make = self.exif["Make"]
+
+                if "Model" in self.exif:
+                    self.model = self.exif["Model"]
+
+                if "ImageUniqueID" in self.exif:
+                    self.ImageUniqueID = self.exif["ImageUniqueID"]
+
+                self.hasEXIF = True
 
         except Exception as e:
             print(e.args[0])
@@ -44,14 +57,8 @@ class image():
             "hasEXIF" : self.hasEXIF,
             "size" : self.size
         }
-        self.checkIfExists()
-        im_id = self.DBCollection.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
-        #im_id = self.DBCollection.insert(imgobject)
-        print()
 
-    def checkIfExists(self):
-        id = self.DBCollection.find_one({"dateTaken":self.dateTaken})
-        print()
+        im_id = self.DBCollection.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
 
 
 
@@ -66,7 +73,7 @@ class image():
             }
             return exif
         except Exception as e:
-            print(e.args[0])
+            return None
 
 
 
@@ -76,60 +83,3 @@ class image():
 
 
 
-
-
-
-
-# from app import db
-#
-# from PIL import Image
-# from PIL import ExifTags
-# from datetime import datetime
-# import os
-#
-#
-#
-# class image(db.Document):
-#     id = db.UUIDField()
-#     dateTaken = db.DateTimeField(required=False, unique=True)
-#     make = db.StringField()
-#     model = db.StringField()
-#     ImageUniqueID = db.StringField()
-#     path = db.StringField()
-#     hasEXIF = db.BooleanField(required=True)
-#     size = db.IntField()
-#
-#
-#     def update(self, fileName):
-#
-#         exif = self.getEXIF(fileName)
-#         try:
-#             img = image()
-#             photoDate = str(exif["DateTimeOriginal"])
-#             self.dateTaken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
-#             self.make = exif["Make"]
-#             self.model = exif["Model"]
-#             self.path = fileName
-#             self.hasEXIF = True
-#             self.size = os.path.getsize(fileName)
-#             self.ImageUniqueID = exif["ImageUniqueID"]
-#             self.save()
-#         except Exception as e:
-#             print(e.args[0])
-#
-#
-#
-#
-#
-#     def getEXIF(self, file):
-#
-#         try:
-#             imgFile=Image.open(file,'r')
-#             exif = {
-#                 ExifTags.TAGS[k]: v
-#                 for k, v in imgFile._getexif().items()
-#                 if k in ExifTags.TAGS
-#             }
-#             return exif
-#         except Exception as e:
-#             print(e.args[0])
