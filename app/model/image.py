@@ -6,10 +6,12 @@ from app import db
 
 
 class image():
-    def __init__(self, fileName):
+    def __init__(self, imageSource):
 
-        self.DBCollection = db['images']
-        self.exif = self.getEXIF(fileName)
+        self.image_db = db['images']
+        self.exif = self.getEXIF(imageSource)
+        self.exif = None
+
         self.dateTaken = ""
         self.make = ""
         self.model = ""
@@ -17,12 +19,24 @@ class image():
         self.path = ""
         self.hasEXIF = ""
         self.size = ""
+        self.id = ""
+
+        if isinstance(imageSource, str):
+            self.imageFromFile(imageSource)
+        else:
+            self.imageFromDB(imageSource)
+
+
+
+    def imageFromFile(self, imageSource):
 
         try:
+            self.exif = self.getEXIF(imageSource)
+
             if self.exif == None:
                 self.hasEXIF = False
-                self.path = fileName
-                self.size = os.path.getsize(fileName)
+                self.path = imageSource
+                self.size = os.path.getsize(imageSource)
             else:
                 if "DateTimeOriginal" in self.exif:
                     photoDate = str(self.exif["DateTimeOriginal"])
@@ -47,6 +61,17 @@ class image():
         self.persist()
 
 
+
+    def imageFromDB(self, imageSource):
+        self.dateTaken = imageSource['dateTaken']
+        self.make = imageSource['make']
+        self.model = imageSource['model']
+        self.ImageUniqueID = imageSource['ImageUniqueID']
+        self.path = imageSource['path']
+        self.hasEXIF = imageSource['hasEXIF']
+        self.size = imageSource['size']
+        self.id = imageSource['_id']
+
     def persist(self):
         imgobject = {
             "dateTaken" : self.dateTaken,
@@ -58,7 +83,7 @@ class image():
             "size" : self.size
         }
 
-        im_id = self.DBCollection.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
+        im_id = self.image_db.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
 
 
 
