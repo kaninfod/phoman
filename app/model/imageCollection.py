@@ -3,18 +3,22 @@ __author__ = 'martin'
 from app.model.image import image
 from app import db
 
-class imageCollection(dict):
+
+class imageCollection():
 
     def __init__(self, query):
 
         self.image_db = db['images']
         self.query = query
-
-        k = self.image_db.find(self.query)
-        for ima in k:
-            l = image(ima)
-            self[l.id] = l
-
+        self.cursor = self.image_db.find(self.query)
         print()
-def test():
-    print()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+
+        if self.cursor and self.cursor.alive:
+            return image(next(self.cursor))
+        else:
+            raise StopIteration()
