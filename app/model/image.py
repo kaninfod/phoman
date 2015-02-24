@@ -13,6 +13,9 @@ class image():
         self.exif = None
 
         self.dateTaken = ""
+        self.year = ""
+        self.month = ""
+        self.day = ""
         self.make = ""
         self.model = ""
         self.ImageUniqueID = ""
@@ -41,6 +44,9 @@ class image():
                 elif "DateTime" in self.exif:
                     photoDate = str(self.exif["DateTime"])
                 self.dateTaken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
+                self.year = self.dateTaken.year
+                self.month = self.dateTaken.month
+                self.day = self.dateTaken.day
 
                 if "Make" in self.exif:
                     self.make = self.exif["Make"]
@@ -63,6 +69,9 @@ class image():
 
     def imageFromDB(self, imageSource):
         self.dateTaken = imageSource['dateTaken']
+        self.year = imageSource['year']
+        self.month = imageSource['month']
+        self.day = imageSource['day']
         self.make = imageSource['make']
         self.model = imageSource['model']
         self.ImageUniqueID = imageSource['ImageUniqueID']
@@ -74,6 +83,9 @@ class image():
     def persist(self):
         imgobject = {
             "dateTaken" : self.dateTaken,
+            "year" : self.year,
+            "month" : self.month,
+            "day" : self.day,
             "make" : self.make,
             "model" : self.model,
             "ImageUniqueID" : self.ImageUniqueID,
@@ -98,12 +110,3 @@ class image():
             return exif
         except Exception as e:
             return None
-
-
-
-
-
-
-
-
-

@@ -10,11 +10,18 @@ from datetime import datetime
 
 @app.route('/')
 def artists():
-    #common.indexImages("/Users/hingem/Dropbox/Camera Uploads")
+    common.indexImages("/Users/hingem/Dropbox/Camera Uploads")
+    cl = imageCollection(query={'make':'SAMSUNG'}, name="taken with samsung")
+    start = datetime(2015, 1, 1)
+    end = datetime(2011, 2, 1)
+    cl = imageCollection(query={'dateTaken':{"$gte": start, "$lt": end}}, name="taken with samsung", saveToDB=True)
+    album = imageCollection(query={'make':'SAMSUNG'}, name="taken with samsung", saveToDB=True)
 
-    cl = imageCollection({'make':'SAMSUNG'})
+    data = "cl"
 
+    return render_template('home.html', data=data)
 
-
-    data = cl[3:13]
+@app.route('/collections')
+def listCollections():
+    data = common.getCollections()[1:10]
     return render_template('home.html', data=data)

@@ -17,11 +17,6 @@ def findImages():
     print()
 
 
-def populateCollection(collection):
-    image_db = db['images']
+def getCollections():
+    return db['collections'].find()
 
-    k = image_db.find(collection.query)
-    for ima in k:
-        l = image(ima)
-        collection[l.id] = l
-    return collection
