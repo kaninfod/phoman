@@ -35,8 +35,6 @@ class image():
 
             if self.exif == None:
                 self.hasEXIF = False
-                self.path = imageSource
-                self.size = os.path.getsize(imageSource)
             else:
                 if "DateTimeOriginal" in self.exif:
                     photoDate = str(self.exif["DateTimeOriginal"])
@@ -54,7 +52,8 @@ class image():
                     self.ImageUniqueID = self.exif["ImageUniqueID"]
 
                 self.hasEXIF = True
-
+                self.path = imageSource
+                self.size = os.path.getsize(imageSource)
         except Exception as e:
             print(e.args[0])
 

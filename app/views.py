@@ -10,16 +10,11 @@ from datetime import datetime
 
 @app.route('/')
 def artists():
-    common.indexImages("/home/martin/Pictures/000 Master - Auto Backup/2014/12")
+    #common.indexImages("/Users/hingem/Dropbox/Camera Uploads")
 
     cl = imageCollection({'make':'SAMSUNG'})
-    t1 = datetime.now()
 
-    for ima in cl:
-        print(str(ima.id))
 
-    print(datetime.now() - t1)
 
-    common.findImages()
-    data = "hello world"
+    data = cl[3:13]
     return render_template('home.html', data=data)
