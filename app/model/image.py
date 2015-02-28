@@ -2,27 +2,18 @@ import os
 from datetime import datetime
 from PIL import Image
 from PIL import ExifTags
-from app import db
-
+from app import imagesDB
+from app import ImagePersistedFields
 
 class image():
     def __init__(self, imageSource):
 
-        self.image_db = db['images']
         self.exif = self.getEXIF(imageSource)
         self.exif = None
 
-        self.dateTaken = ""
-        self.year = ""
-        self.month = ""
-        self.day = ""
-        self.make = ""
-        self.model = ""
-        self.ImageUniqueID = ""
-        self.path = ""
-        self.hasEXIF = ""
-        self.size = ""
-        self.id = ""
+        for field in ImagePersistedFields:
+            setattr(self,field,None)
+
 
         if isinstance(imageSource, str):
             self.imageFromFile(imageSource)
@@ -68,33 +59,19 @@ class image():
 
 
     def imageFromDB(self, imageSource):
-        self.dateTaken = imageSource['dateTaken']
-        self.year = imageSource['year']
-        self.month = imageSource['month']
-        self.day = imageSource['day']
-        self.make = imageSource['make']
-        self.model = imageSource['model']
-        self.ImageUniqueID = imageSource['ImageUniqueID']
-        self.path = imageSource['path']
-        self.hasEXIF = imageSource['hasEXIF']
-        self.size = imageSource['size']
-        self.id = imageSource['_id']
+
+        for field in ImagePersistedFields:
+            if field == "id":
+                setattr(self,field,imageSource['_id'])
+            else:
+                setattr(self,field,imageSource[field])
 
     def persist(self):
-        imgobject = {
-            "dateTaken" : self.dateTaken,
-            "year" : self.year,
-            "month" : self.month,
-            "day" : self.day,
-            "make" : self.make,
-            "model" : self.model,
-            "ImageUniqueID" : self.ImageUniqueID,
-            "path" : self.path,
-            "hasEXIF" : self.hasEXIF,
-            "size" : self.size
-        }
-
-        im_id = self.image_db.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
+        imgobject = {}
+        for field in ImagePersistedFields:
+            if field !='id':
+                imgobject[field] = getattr(self,field)
+        im_id = imagesDB.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
 
 
 
@@ -110,3 +87,8 @@ class image():
             return exif
         except Exception as e:
             return None
+
+    def __str__(self):
+
+        return self.path
+

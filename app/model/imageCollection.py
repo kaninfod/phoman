@@ -2,35 +2,21 @@ __author__ = 'martin'
 
 from app.model.image import image
 from app import db
+from app import collectionsDB, imagesDB
 from math import ceil
-from datetime import datetime
-import json
-from bson import json_util
 from bson.objectid import ObjectId
+from app import ImagePersistedFields
 
 
 class imageCollection():
-    def __init__(self, query="", name="", saveToDB=False, id = None):
-
-        self.image_db = db['images']
-        self.collection_db = db['collections']
-        self.query = query
-        self.name = name
+    def __init__(self, id = None):
+        self.query = query()
+        self.name = ""
         self.id = id
-
-        if saveToDB and query:
-            if not name:
-                self.name = "Created %s" % datetime.now()
-            t = self.getDBObj()
-            self.id = self.collection_db.insert(t)
-
-
-        elif self.id:
-            self.collection = self.collection_db.find_one({"_id":ObjectId(self.id)})
-            self.query = json.loads(self.collection["query"])
-            self.name = self.collection["name"]
-
-        self.cursor = self.image_db.find(self.query)
+        self.imagecount = ""
+        self.cursor = None
+        if id:
+            self.getCollection()
 
     def __iter__(self):
         return self
@@ -52,13 +38,57 @@ class imageCollection():
                  lst.append(image(item))
             return lst
 
+    def getCollection(self):
+        if self.id:
+            self.collection = self.collection = collectionsDB.find_one({"_id":ObjectId(self.id)})
+            if self.collection:
+                self.id = self.collection["_id"]
+                self.name = self.collection["name"]
+                self.query.setFromDB(self.collection["query"])
+            self.getImages()
+
+
+    def save(self):
+        if self.name and self.query:
+            qry = self.query.getDBObj()
+            i = collectionsDB.update({"query":qry}, {"$set":self.getDBObj()}, upsert=True)
+            self.collection = collectionsDB.find_one({"query":qry})
+            self.id = self.collection["_id"]
+            self.getImages()
+
+    def getImages(self):
+        if self.id:
+            self.cursor = imagesDB.find(self.query.getDBObj())
+            self.imagecount = self.cursor.count()
+
     def getDBObj(self):
         collection = {
             "name" : self.name,
-            "query" : json.dumps(self.query, default=json_util.default),
+            "query" : self.query.getDBObj(),
         }
 
         return collection
+
+
+class query():
+
+    def __init__(self):
+        for field in ImagePersistedFields:
+            setattr(self,field,None)
+
+
+    def getDBObj(self):
+        qry = {}
+        for field in ImagePersistedFields:
+            if getattr(self,field):
+                qry[field] = getattr(self,field)
+        return qry
+
+    def setFromDB(self, DBObject):
+        for field in ImagePersistedFields:
+            if field in DBObject:
+                setattr(self,field,DBObject[field])
+
 
 class paginateor():
     def __init__(self, perPage, totalCount, page):
