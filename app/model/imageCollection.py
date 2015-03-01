@@ -6,6 +6,9 @@ from app import collectionsDB, imagesDB
 from math import ceil
 from bson.objectid import ObjectId
 from app import ImagePersistedFields
+import datetime
+from json import dumps, loads
+from bson import json_util
 
 
 class imageCollection():
@@ -50,21 +53,21 @@ class imageCollection():
 
     def save(self):
         if self.name and self.query:
-            qry = self.query.getDBObj()
+            qry = self.query.queryFetchImages()
             i = collectionsDB.update({"query":qry}, {"$set":self.getDBObj()}, upsert=True)
-            self.collection = collectionsDB.find_one({"query":qry})
+            self.collection = collectionsDB.find_one({"query":self.query.__dict__})
             self.id = self.collection["_id"]
             self.getImages()
 
     def getImages(self):
         if self.id:
-            self.cursor = imagesDB.find(self.query.getDBObj())
+            self.cursor = imagesDB.find((self.query.queryFetchImages()))
             self.imagecount = self.cursor.count()
 
     def getDBObj(self):
         collection = {
             "name" : self.name,
-            "query" : self.query.getDBObj(),
+            "query" : self.query.__dict__,
         }
 
         return collection
@@ -75,17 +78,57 @@ class query():
     def __init__(self):
         for field in ImagePersistedFields:
             setattr(self,field,None)
+        self._dateTaken_gt = None
+        self._dateTaken_lt = None
 
 
-    def getDBObj(self):
+    @property
+    def dateTaken_gt(self):
+        return self._dateTaken_gt
+
+    @dateTaken_gt.setter
+    def dateTaken_gt(self, value):
+        if isinstance(value, datetime.date):
+            self._dateTaken_gt = datetime.datetime.combine(value, datetime.time.min)
+
+
+    @property
+    def dateTaken_lt(self):
+        return self._dateTaken_lt
+
+    @dateTaken_lt.setter
+    def dateTaken_lt(self, value):
+        if isinstance(value, datetime.date):
+            self._dateTaken_lt = datetime.datetime.combine(value, datetime.time.min)
+
+
+
+    def queryFetchImages(self):
         qry = {}
+
         for field in ImagePersistedFields:
             if getattr(self,field):
                 qry[field] = getattr(self,field)
+
+        if self.dateTaken_gt:
+
+            if "dateTaken" in qry:
+                qry["dateTaken"]["$gte"] = self.dateTaken_gt
+            else:
+                qry["dateTaken"] = {"$gte":self.dateTaken_gt}
+
+        if self.dateTaken_lt:
+
+            if "dateTaken" in qry:
+                qry["dateTaken"]["$lt"] = self.dateTaken_lt
+            else:
+                qry["dateTaken"] = {"$lt":self.dateTaken_lt}
+
+
         return qry
 
     def setFromDB(self, DBObject):
-        for field in ImagePersistedFields:
+        for field in DBObject:
             if field in DBObject:
                 setattr(self,field,DBObject[field])
 

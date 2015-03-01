@@ -11,9 +11,9 @@
 </head>
 <body>
 <div class="page-header">
-   <h1>Example page header
-      <small>Subtext for header</small>
-   </h1>
+    <h1>Example page header
+        <small>Subtext for header</small>
+    </h1>
 </div>
 <div class="container-fluid">
     <div class="row-fluid">
@@ -22,6 +22,17 @@
         </div>
         <div class="span10">
             <!--Body content-->
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-success" role="alert">
+
+                    {% for message in messages %}
+                    {{ message }}
+                    {% endfor %}
+
+            </div>
+            {% endif %}
+            {% endwith %}
             {% block content %}
 
 
