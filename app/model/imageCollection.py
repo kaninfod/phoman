@@ -1,14 +1,13 @@
 __author__ = 'martin'
 
-from app.model.image import image
-from app import db
-from app import collectionsDB, imagesDB
 from math import ceil
-from bson.objectid import ObjectId
-from app import ImagePersistedFields
 import datetime
-from json import dumps, loads
-from bson import json_util
+
+from bson.objectid import ObjectId
+
+from app.model.image import image
+from app import collectionsDB, imagesDB
+from app import ImagePersistedFields
 
 
 class imageCollection():
@@ -54,8 +53,8 @@ class imageCollection():
     def save(self):
         if self.name and self.query:
             qry = self.query.queryFetchImages()
-            i = collectionsDB.update({"query":qry}, {"$set":self.getDBObj()}, upsert=True)
-            self.collection = collectionsDB.find_one({"query":self.query.__dict__})
+            i = collectionsDB.update({"query":self.query.serialize()}, {"$set":self.getDBObj()}, upsert=True)
+            self.collection = collectionsDB.find_one({"query":self.query.serialize()})
             self.id = self.collection["_id"]
             self.getImages()
 
@@ -67,7 +66,7 @@ class imageCollection():
     def getDBObj(self):
         collection = {
             "name" : self.name,
-            "query" : self.query.__dict__,
+            "query" : self.query.serialize(),
         }
 
         return collection
@@ -124,7 +123,6 @@ class query():
             else:
                 qry["dateTaken"] = {"$lt":self.dateTaken_lt}
 
-
         return qry
 
     def setFromDB(self, DBObject):
@@ -132,6 +130,13 @@ class query():
             if field in DBObject:
                 setattr(self,field,DBObject[field])
 
+    def serialize(self):
+        O = self.__dict__.copy()
+        if "_dateTaken_lt" in O:
+            O["dateTaken_lt"] = O.pop("_dateTaken_lt")
+        if "_dateTaken_gt" in O:
+            O["dateTaken_gt"] = O.pop("_dateTaken_gt")
+        return O
 
 class paginateor():
     def __init__(self, perPage, totalCount, page):
