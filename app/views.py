@@ -11,11 +11,19 @@ from flask import request, flash, redirect, url_for
 
 
 @app.route('/sync')
-def artists():
+def sync():
     common.indexImages("/home/martin/Pictures/000 Master - Auto Backup/2014")
 
 
     return render_template('home.html', data=data)
+
+@app.route('/collections',  methods=['GET', 'POST'])
+def collection():
+    data=common.getCollections()
+    pagination = common.pagination(1, 7, 70).pagingObject()
+
+
+    return render_template('collections.html', data=data, paginator=pagination)
 
 @app.route('/addcollection',  methods=['GET', 'POST'])
 def addCollection():
@@ -36,3 +44,8 @@ def addCollection():
     return render_template('addCollection.html', title="Add new collection", form=form)
 
 
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    args['page'] = page
+    return url_for(request.endpoint, **args)
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page

@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% import 'paginator_macro.html' as paginator %}
+
+{% block content %}
+
+
+{% for i in paginator %}
+    {{ i }}
+    {% endfor %}
+<ul class="list-group">
+    {% for col in data %}
+        <li class="list-group-item">
+            <span class="badge">14</span>
+            {{ col.name }}
+        </li>
+    {% endfor %}
+</ul>
+
+{{ paginator.render_pagination(paginator) }}
+
+
+{% endblock %}

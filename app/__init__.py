@@ -24,3 +24,4 @@ ImagePersistedFields = [
     "id"
 ]
 from app import views
+

@@ -131,12 +131,12 @@ class query():
                 setattr(self,field,DBObject[field])
 
     def serialize(self):
-        O = self.__dict__.copy()
-        if "_dateTaken_lt" in O:
-            O["dateTaken_lt"] = O.pop("_dateTaken_lt")
-        if "_dateTaken_gt" in O:
-            O["dateTaken_gt"] = O.pop("_dateTaken_gt")
-        return O
+        obj = self.__dict__.copy()
+        if "_dateTaken_lt" in obj:
+            obj["dateTaken_lt"] = obj.pop("_dateTaken_lt")
+        if "_dateTaken_gt" in obj:
+            obj["dateTaken_gt"] = obj.pop("_dateTaken_gt")
+        return obj
 
 class paginateor():
     def __init__(self, perPage, totalCount, page):
