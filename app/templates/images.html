@@ -3,15 +3,23 @@
 
 {% block content %}
 
+<div class="row">
 
-<ul class="list-group">
-    {% for img in data %}
-        <li class="list-group-item">
-            <span class="badge">{{img._id}}</span>
-            {{ img.path }}
-        </li>
-    {% endfor %}
-</ul>
+  {% for img in data %}
+  <div class="col-xs-6 col-lg-3">
+
+      <a href="#" class="thumbnail"> <img src="/static/img/mypic.jpg" class="img-responsive img-thumbnail" alt="pichere">
+      <div class="caption text-center">
+          <span class="label label-default">{{img.dateTaken}}</span>
+      </div>
+      </a>
+
+
+  </div>
+  {% endfor %}
+</div>
+
+
 
 {{ paginatorx.render_pagination(paginator) }}
 

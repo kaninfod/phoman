@@ -15,37 +15,42 @@
         <small>Subtext for header</small>
     </h1>
 </div>
-<div class="container">
-    <div class="row">
-        <div class="col-md-2">
-            <!--Sidebar content-->
+<div class="row">
+    <div class="col-sm-3">
+        <div class="well bs-sidebar affix" id="sidebar">
+            <ul class="nav nav-pills nav-stacked">
+                <li class="list-group-item"><a href="/collections">Collections</a></li>
+                <li class="list-group-item"><a href="/addcollection">Add collection</a></li>
+                <li class="list-group-item"><a href="/sync">Scan</a></li>
+                <li class="list-group-item"><a href="/updateimagecounts">Update Imagecounts</a></li>
+
+            </ul>
         </div>
-        <div class="col-md-6">
-                        <!--Body content-->
-            {% with messages = get_flashed_messages() %}
+        <!--well bs-sidebar affix-->
+    </div>
+    <!--col-sm-3-->
+    <div class="col-sm-9">
+        {% with messages = get_flashed_messages() %}
             {% if messages %}
-            <div class="alert alert-success" role="alert">
+                <div class="alert alert-success" role="alert">
 
                     {% for message in messages %}
                     {{ message }}
                     {% endfor %}
 
-            </div>
+                </div>
             {% endif %}
-            {% endwith %}
-            {% block content %}
+        {% endwith %}
+        {% block content %}
 
 
-            {% endblock %}
-        </div>
-        <div class="col-md-4">
+        {% endblock %}
 
-        </div>
+
     </div>
-
+    <!--col-sm-9-->
 </div>
-
-
+<!--row-->
 
 
 </body>

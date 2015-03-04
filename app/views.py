@@ -20,15 +20,15 @@ def sync():
 
 
 
-@app.route('/images',  defaults={'page':1})
-@app.route('/images/page/<int:page>')
-def images(page):
+@app.route('/images/id/<id>',  defaults={'page':1})
+@app.route('/images/id/<id>/page/<int:page>')
+def images(id, page):
 
-    perPage = 10
-    data = col = imageCollection("54f3d981ec4a5caab5af6037")
+    perPage = 25
+    data = imageCollection(id)
     pagination = common.pagination(page, perPage, data.imagecount)
     data = data[pagination.min_rec:pagination.max_rec]
-    common.getCollections()
+
 
 
     return render_template('images.html', data=data, paginator=pagination)
@@ -38,7 +38,7 @@ def images(page):
 @app.route('/collections/page/<int:page>')
 def collection(page):
 
-    perPage = 4
+    perPage = 9
     data = collectionsDB.find()
     pagination = common.pagination(page, perPage, data.count())
     data = data[pagination.min_rec:pagination.max_rec]
@@ -49,9 +49,7 @@ def collection(page):
 
 @app.route('/addcollection',  methods=['GET', 'POST'])
 def addCollection():
-    col = imageCollection("54f2912708298c3a7af6b4d5")
-    k = col[1]
-    print(k)
+
     form = newCollectionForm(   )
     if request.method == "POST" and form.validate():
         col = imageCollection()
@@ -64,6 +62,12 @@ def addCollection():
         flash(col.imagecount)
         return redirect('/addcollection')
     return render_template('addCollection.html', title="Add new collection", form=form)
+
+
+@app.route('/updateimagecounts')
+def updateimagecounts():
+    common.getCollections()
+    return redirect('/collections')
 
 
 def url_for_other_page(page):
