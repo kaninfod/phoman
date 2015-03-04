@@ -17,6 +17,7 @@ class imageCollection():
         self.id = id
         self.imagecount = ""
         self.cursor = None
+
         if id:
             self.getCollection()
 
@@ -47,7 +48,7 @@ class imageCollection():
                 self.id = self.collection["_id"]
                 self.name = self.collection["name"]
                 self.query.setFromDB(self.collection["query"])
-            self.getImages()
+                self.getImages()
 
 
     def save(self):
@@ -62,10 +63,12 @@ class imageCollection():
         if self.id:
             self.cursor = imagesDB.find((self.query.queryFetchImages()))
             self.imagecount = self.cursor.count()
+            i = collectionsDB.update({"_id":self.id}, {"$set":{"imagecount":self.imagecount}}, upsert=False)
 
     def getDBObj(self):
         collection = {
             "name" : self.name,
+            "imagecount": self.imagecount,
             "query" : self.query.serialize(),
         }
 

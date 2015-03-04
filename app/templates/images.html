@@ -5,10 +5,10 @@
 
 
 <ul class="list-group">
-    {% for col in data %}
+    {% for img in data %}
         <li class="list-group-item">
-            <span class="badge">{{col.imagecount}}</span>
-            {{ col.name }}
+            <span class="badge">{{img._id}}</span>
+            {{ img.path }}
         </li>
     {% endfor %}
 </ul>

@@ -19,6 +19,11 @@ def findImages():
 
 
 def getCollections():
+    col_db = collectionsDB.find()
+    for c in col_db:
+        col = imageCollection(c['_id'])
+
+
     return collectionsDB.find()
 
 
@@ -27,7 +32,16 @@ class pagination(object):
         self.page = page
         self.per_page = per_page
         self.total_count = total_count
-        self.paging = self.getPaging()
+
+    @property
+    def min_rec(self):
+        return (self.page - 1) * self.per_page
+
+
+    @property
+    def max_rec(self):
+        return (self.page) * self.per_page
+
 
     @property
     def pages(self):
@@ -41,28 +55,8 @@ class pagination(object):
     def has_next(self):
         return self.page < self.pages
 
-    def getPaging(self):
-        p = []
-        for i in self.iter_pages():
-            p.append(i)
-        return p
-
-
-    def pagingObject(self):
-        Obj = {}
-        Obj["paging"] = self.getPaging()
-        Obj["page"] = self.page
-        Obj["pages"] = self.pages
-        Obj["has_next"] = self.has_next
-        Obj["has_prev"] = self.has_prev
-        Obj["per_page"] = self.per_page
-
-        return Obj
-
-
-
-    def iter_pages(self, left_edge=2, left_current=2,
-                   right_current=5, right_edge=2):
+    def iter_pages(self, left_edge=1, left_current=2,
+                   right_current=4, right_edge=1):
         last = 0
         for num in range(1, self.pages + 1):
             if num <= left_edge or (num > self.page - left_current - 1 and num < self.page + right_current) or num > self.pages - right_edge:

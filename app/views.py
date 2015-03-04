@@ -2,6 +2,7 @@ from flask import render_template
 
 
 from app import app
+from app import collectionsDB
 from app.model import *
 from app.model.imageCollection import imageCollection
 import datetime
@@ -17,10 +18,31 @@ def sync():
 
     return render_template('home.html', data=data)
 
-@app.route('/collections',  methods=['GET', 'POST'])
-def collection():
-    data=common.getCollections()
-    pagination = common.pagination(1, 7, 70).pagingObject()
+
+
+@app.route('/images',  defaults={'page':1})
+@app.route('/images/page/<int:page>')
+def images(page):
+
+    perPage = 10
+    data = col = imageCollection("54f3d981ec4a5caab5af6037")
+    pagination = common.pagination(page, perPage, data.imagecount)
+    data = data[pagination.min_rec:pagination.max_rec]
+    common.getCollections()
+
+
+    return render_template('images.html', data=data, paginator=pagination)
+
+
+@app.route('/collections',  defaults={'page':1})
+@app.route('/collections/page/<int:page>')
+def collection(page):
+
+    perPage = 4
+    data = collectionsDB.find()
+    pagination = common.pagination(page, perPage, data.count())
+    data = data[pagination.min_rec:pagination.max_rec]
+
 
 
     return render_template('collections.html', data=data, paginator=pagination)
