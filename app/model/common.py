@@ -1,17 +1,19 @@
 __author__ = 'martin'
 
 import os
+from app import *
 from app.model.image import image
 from app.model.imageCollection import imageCollection
 from app import collectionsDB
 from math import ceil
 
-def indexImages(path):
-
+def indexImages():
+    path = app.config["IMAGE_STORE"]
     for root, dirnames, filenames in os.walk(path):
         for filename in filenames:
-            fn = root + "/" + filename
-            img = image(fn)
+            if os.path.splitext(filename)[1] == ".jpg":
+                fn = root + "/" + filename
+                img = image(fn)
 
 def findImages():
     imgcol = imageCollection()

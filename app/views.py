@@ -8,22 +8,29 @@ from app.model.imageCollection import imageCollection
 import datetime
 import calendar
 from .forms import newCollectionForm
-from flask import request, flash, redirect, url_for
-
-
-@app.route('/')
-def home():
-    return render_template('home.html')
+from flask import request, flash, redirect, url_for, send_from_directory, send_file, safe_join
 
 
 
 @app.route('/sync')
 def sync():
-    common.indexImages("/home/martin/Pictures/000 Master - Auto Backup/2014")
+    common.indexImages()
 
 
-    return render_template('home.html', data="kaj")
+    return render_template('home.html')
 
+
+@app.route('/imagestore')
+def imagestore():
+    relative_path = request.args["path"]
+
+    return send_file(relative_path)
+
+@app.route('/showlarge')
+def showlarge():
+    data = request.args["path"]
+
+    return render_template('showlarge.html', data=data)
 
 
 @app.route('/images/id/<id>',  defaults={'page':1})
@@ -74,6 +81,13 @@ def addCollection():
 def updateimagecounts():
     common.getCollections()
     return redirect('/collections')
+
+
+@app.route('/')
+def home():
+
+    return render_template('home.html')
+
 
 @app.route('/addCol')
 def addCol():

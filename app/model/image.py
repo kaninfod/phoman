@@ -1,9 +1,10 @@
 import os
 from datetime import datetime
-from PIL import Image
+from PIL import Image, ImageOps
 from PIL import ExifTags
 from app import imagesDB
 from app import ImagePersistedFields
+from app import *
 
 class image():
     def __init__(self, imageSource):
@@ -13,6 +14,12 @@ class image():
 
         for field in ImagePersistedFields:
             setattr(self,field,None)
+
+        self.filename = ""
+        self.originalPath = ""
+        self.largePath = ""
+        self.mediumPath = ""
+        self.thumbPath = ""
 
 
         if isinstance(imageSource, str):
@@ -49,7 +56,11 @@ class image():
                     self.ImageUniqueID = self.exif["ImageUniqueID"]
 
                 self.hasEXIF = True
-                self.path = imageSource
+                self.originalPath = imageSource
+                self.absolute_path, self.filename,  = os.path.split(imageSource)
+
+                self.relative_path = self.absolute_path.replace(app.config["IMAGE_STORE"],"")
+                self.generate_webimages()
                 self.size = os.path.getsize(imageSource)
         except Exception as e:
             print(e.args[0])
@@ -59,20 +70,22 @@ class image():
 
 
     def imageFromDB(self, imageSource):
-
-        for field in ImagePersistedFields:
-            if field == "id":
-                setattr(self,field,imageSource['_id'])
-            else:
-                setattr(self,field,imageSource[field])
+        blacklist = [ "exif"]
+        for field in imageSource:
+            if not field in blacklist:
+                if field == "_id":
+                    setattr(self,"id",imageSource[field])
+                else:
+                    setattr(self,field,imageSource[field])
 
     def persist(self):
         imgobject = {}
-        for field in ImagePersistedFields:
-            if field !='id':
+        blacklist = ["id", "exif"]
+        for field in self.__dict__:#ImagePersistedFields:
+            if not field in blacklist:
                 imgobject[field] = getattr(self,field)
         im_id = imagesDB.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
-
+        print()
 
 
     def getEXIF(self, file):
@@ -89,6 +102,22 @@ class image():
             return None
 
     def __str__(self):
-
         return self.path
 
+    def generate_webimages(self):
+
+        im = Image.open(self.originalPath)
+
+        size = 800, 640
+        self.mediumPath = "%smed_%s" % (app.config["IMAGE_THUMBS"], self.filename)
+        if not os.path.isfile(self.mediumPath):
+
+            im.thumbnail(size, Image.ANTIALIAS)
+            im.save(self.mediumPath, "JPEG")
+
+        size = (256, 256)
+        self.thumbPath = "%sthm_%s" % (app.config["IMAGE_THUMBS"], self.filename)
+        if not os.path.isfile(self.thumbPath):
+
+            thumb = ImageOps.fit(im, size, Image.ANTIALIAS)
+            thumb.save(self.thumbPath, "JPEG")
