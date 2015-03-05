@@ -8,7 +8,7 @@
   {% for img in data %}
   <div class="col-xs-6 col-lg-3">
 
-      <a href="/showlarge?path={{ img.mediumPath }}" class="thumbnail"> <img src="/imagestore?path={{ img.thumbPath }}" class="img-responsive img-thumbnail" alt="pichere">
+      <a href="/showlarge/id/{{ img.id }}" class="thumbnail"> <img src="/imagestore/id/{{ img.id }}/size/tm" class="img-responsive img-thumbnail" alt="pichere">
       <div class="caption text-center">
           <span class="label label-default">{{img.dateTaken}}</span>
       </div>

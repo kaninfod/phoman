@@ -3,12 +3,14 @@ from flask import render_template
 
 from app import app
 from app import collectionsDB
+from app import imagesDB
 from app.model import *
 from app.model.imageCollection import imageCollection
+from app.model.image import image
 import datetime
 import calendar
 from .forms import newCollectionForm
-from flask import request, flash, redirect, url_for, send_from_directory, send_file, safe_join
+from flask import request, flash, redirect, url_for, send_file, session
 
 
 
@@ -20,24 +22,33 @@ def sync():
     return render_template('home.html')
 
 
-@app.route('/imagestore')
-def imagestore():
-    relative_path = request.args["path"]
+@app.route('/imagestore/id/<id>/size/<size>')
+def imagestore(id, size):
 
-    return send_file(relative_path)
+    im = image(id=id)
 
-@app.route('/showlarge')
-def showlarge():
-    data = request.args["path"]
+    if size == "tm":
+        path = im.thumbPath
+    elif size == "md":
+        path = im.mediumPath
+    elif size == "lg":
+        path = im.largePath
 
-    return render_template('showlarge.html', data=data)
+
+    return send_file(path)
+
+@app.route('/showlarge/id/<id>')
+def showlarge(id):
+
+    return render_template('showlarge.html', back_url=request.referrer,id=id)
 
 
 @app.route('/images/id/<id>',  defaults={'page':1})
 @app.route('/images/id/<id>/page/<int:page>')
 def images(id, page):
 
-    perPage = 25
+    perPage = 20
+    session["uha"] = 'martin'
     data = imageCollection(id)
     pagination = common.pagination(page, perPage, data.imagecount)
     data = data[pagination.min_rec:pagination.max_rec]

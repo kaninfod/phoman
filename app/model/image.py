@@ -1,4 +1,5 @@
-import os
+import os, errno
+from bson.objectid import ObjectId
 from datetime import datetime
 from PIL import Image, ImageOps
 from PIL import ExifTags
@@ -7,9 +8,9 @@ from app import ImagePersistedFields
 from app import *
 
 class image():
-    def __init__(self, imageSource):
+    def __init__(self, imageSource=None, id=None):
 
-        self.exif = self.getEXIF(imageSource)
+
         self.exif = None
 
         for field in ImagePersistedFields:
@@ -21,6 +22,9 @@ class image():
         self.mediumPath = ""
         self.thumbPath = ""
 
+
+        if id:
+            imageSource = imagesDB.find_one({'_id':ObjectId(id)})
 
         if isinstance(imageSource, str):
             self.imageFromFile(imageSource)
@@ -56,10 +60,19 @@ class image():
                     self.ImageUniqueID = self.exif["ImageUniqueID"]
 
                 self.hasEXIF = True
-                self.originalPath = imageSource
-                self.absolute_path, self.filename,  = os.path.split(imageSource)
 
-                self.relative_path = self.absolute_path.replace(app.config["IMAGE_STORE"],"")
+                self.originalPath = imageSource
+                self.filename  = os.path.split(imageSource)[1]
+
+                webimages_path = app.config["IMAGE_THUMBS"] + self.originalPath.replace(app.config["IMAGE_STORE"],"").replace(self.filename,"")
+                self.ensure_dir(webimages_path)
+
+                fn, ext = os.path.splitext(self.filename)
+
+                self.thumbPath = "%s%s_tm%s" % (webimages_path, fn, ext)
+                self.mediumPath = "%s%s_md%s" % (webimages_path, fn, ext)
+                self.largePath = "%s%s_lg%s" % (webimages_path, fn, ext)
+
                 self.generate_webimages()
                 self.size = os.path.getsize(imageSource)
         except Exception as e:
@@ -67,7 +80,15 @@ class image():
 
         self.persist()
 
-
+    def ensure_dir(self,dirname):
+        """
+        Ensure that a named directory exists; if it does not, attempt to create it.
+        """
+        try:
+            os.makedirs(dirname)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
     def imageFromDB(self, imageSource):
         blacklist = [ "exif"]
@@ -109,14 +130,14 @@ class image():
         im = Image.open(self.originalPath)
 
         size = 800, 640
-        self.mediumPath = "%smed_%s" % (app.config["IMAGE_THUMBS"], self.filename)
+
         if not os.path.isfile(self.mediumPath):
 
             im.thumbnail(size, Image.ANTIALIAS)
             im.save(self.mediumPath, "JPEG")
 
         size = (256, 256)
-        self.thumbPath = "%sthm_%s" % (app.config["IMAGE_THUMBS"], self.filename)
+
         if not os.path.isfile(self.thumbPath):
 
             thumb = ImageOps.fit(im, size, Image.ANTIALIAS)

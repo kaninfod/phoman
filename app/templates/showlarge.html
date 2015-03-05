@@ -1,5 +1,11 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<img src="/imagestore?path={{ data }}" class="img-responsive img-thumbnail" alt="pichere">
+<a href="{{ back_url }}"> <i class="fa fa-long-arrow-left fa-5x"></i></a>
+
+<i class="fa fa-arrow-circle-left fa-5x"></i>
+
+<img src="/imagestore/id/{{ id }}/size/md" class="img-responsive img-thumbnail" alt="pichere">
+
+<i class="fa fa-arrow-circle-right fa-5x"></i>
 {% endblock %}
