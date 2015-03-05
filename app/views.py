@@ -6,8 +6,14 @@ from app import collectionsDB
 from app.model import *
 from app.model.imageCollection import imageCollection
 import datetime
+import calendar
 from .forms import newCollectionForm
 from flask import request, flash, redirect, url_for
+
+
+@app.route('/')
+def home():
+    return render_template('home.html')
 
 
 
@@ -16,7 +22,7 @@ def sync():
     common.indexImages("/home/martin/Pictures/000 Master - Auto Backup/2014")
 
 
-    return render_template('home.html', data=data)
+    return render_template('home.html', data="kaj")
 
 
 
@@ -69,6 +75,18 @@ def updateimagecounts():
     common.getCollections()
     return redirect('/collections')
 
+@app.route('/addCol')
+def addCol():
+    for i in range(1,12):
+        col = imageCollection()
+        col.name = "2014-%s" % i
+
+        col.query.dateTaken_gt = datetime.date(2014, i, 1)
+        m = calendar.monthrange(2014,i)
+        col.query.dateTaken_lt = datetime.date(2014, i, m[1])
+        col.save()
+
+    return redirect('/collections')
 
 def url_for_other_page(page):
     args = request.view_args.copy()
