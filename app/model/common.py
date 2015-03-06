@@ -6,6 +6,10 @@ from app.model.image import image
 from app.model.imageCollection import imageCollection
 from app import collectionsDB
 from math import ceil
+from bson import json_util
+import json
+
+
 
 def indexImages():
     path = app.config["IMAGE_STORE"]
@@ -66,3 +70,15 @@ class pagination(object):
                     yield None
                 yield num
                 last = num
+
+
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, imageCollection):
+            obj_dict = json.dumps(obj,default=json_util.default)
+            return obj_dict
+        else:
+            JSONEncoder.default(self, obj)
+
+# Now tell Flask to use the custom class
+app.json_encoder = CustomJSONEncoder

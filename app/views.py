@@ -48,10 +48,19 @@ def showlarge(id):
 def images(id, page):
 
     perPage = 20
-    session["uha"] = 'martin'
-    data = imageCollection(id)
-    pagination = common.pagination(page, perPage, data.imagecount)
-    data = data[pagination.min_rec:pagination.max_rec]
+
+    if "image_collection" in session:
+        data = session["image_collection"]["data"]
+        pagination = common.pagination(page, perPage, data.imagecount)
+        data = data[pagination.min_rec:pagination.max_rec]
+    else:
+        data = imageCollection(id)
+        #session["image_collection"] = {"id": data.id,
+        #                           "collection":data}
+        c = data.serialize()
+        session["image_collection"] = data
+        pagination = common.pagination(page, perPage, data.imagecount)
+        data = data[pagination.min_rec:pagination.max_rec]
 
 
 

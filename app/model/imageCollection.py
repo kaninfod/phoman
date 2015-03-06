@@ -4,6 +4,7 @@ from math import ceil
 import datetime
 
 from bson.objectid import ObjectId
+from bson.json_util import dumps
 
 from app.model.image import image
 from app import collectionsDB, imagesDB
@@ -43,7 +44,7 @@ class imageCollection():
 
     def getCollection(self):
         if self.id:
-            self.collection = self.collection = collectionsDB.find_one({"_id":ObjectId(self.id)})
+            self.collection = collectionsDB.find_one({"_id":ObjectId(self.id)})
             if self.collection:
                 self.id = self.collection["_id"]
                 self.name = self.collection["name"]
@@ -74,19 +75,26 @@ class imageCollection():
 
         return collection
 
+    def serialize(self):
+        cursor_json = dumps(self.collection)
+        cursor_json = dumps(self.cursor)
+        cursor_json = dumps(self.query.serialize())
+        return cursor_json
 
 class query():
 
     def __init__(self):
         for field in ImagePersistedFields:
-            setattr(self,field,None)
+            if not field in ("dateTaken_gt","dateTaken_lt"):
+                setattr(self,field,"")
         self._dateTaken_gt = None
         self._dateTaken_lt = None
 
 
     @property
     def dateTaken_gt(self):
-        return self._dateTaken_gt
+        if self._dateTaken_gt:
+            return self._dateTaken_gt
 
     @dateTaken_gt.setter
     def dateTaken_gt(self, value):
@@ -141,23 +149,3 @@ class query():
             obj["dateTaken_gt"] = obj.pop("_dateTaken_gt")
         return obj
 
-class paginateor():
-    def __init__(self, perPage, totalCount, page):
-        self.perPage = perPage
-        self.totalCount = totalCount
-        self.page = page
-
-
-    def pages(self):
-        return int(ceil(self.totalCount / float(self.perPage)))
-
-    def has_prev(self):
-        return self.page > 1
-
-    def has_next(self):
-        return self.page < self.pages
-
-
-    def iterPages(self):
-        for num in range(1, self.pages + 1):
-            yield num
