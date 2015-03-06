@@ -20,7 +20,7 @@ class imageCollection():
         self.cursor = None
 
         if id:
-            self.getCollection()
+            self._get_collection()
 
     def __iter__(self):
         return self
@@ -42,31 +42,31 @@ class imageCollection():
                  lst.append(image(item))
             return lst
 
-    def getCollection(self):
+    def _get_collection(self):
         if self.id:
             self.collection = collectionsDB.find_one({"_id":ObjectId(self.id)})
             if self.collection:
                 self.id = self.collection["_id"]
                 self.name = self.collection["name"]
                 self.query.setFromDB(self.collection["query"])
-                self.getImages()
+                self._get_images()
 
 
-    def save(self):
+    def _save(self):
         if self.name and self.query:
             qry = self.query.queryFetchImages()
-            i = collectionsDB.update({"query":self.query.serialize()}, {"$set":self.getDBObj()}, upsert=True)
+            i = collectionsDB.update({"query":self.query.serialize()}, {"$set":self._serialize()}, upsert=True)
             self.collection = collectionsDB.find_one({"query":self.query.serialize()})
             self.id = self.collection["_id"]
-            self.getImages()
+            self._get_images()
 
-    def getImages(self):
+    def _get_images(self):
         if self.id:
             self.cursor = imagesDB.find((self.query.queryFetchImages()))
             self.imagecount = self.cursor.count()
             i = collectionsDB.update({"_id":self.id}, {"$set":{"imagecount":self.imagecount}}, upsert=False)
 
-    def getDBObj(self):
+    def _serialize(self):
         collection = {
             "name" : self.name,
             "imagecount": self.imagecount,
@@ -75,11 +75,15 @@ class imageCollection():
 
         return collection
 
-    def serialize(self):
+    def _xserialize(self):
         cursor_json = dumps(self.collection)
         cursor_json = dumps(self.cursor)
         cursor_json = dumps(self.query.serialize())
         return cursor_json
+
+
+
+
 
 class query():
 
@@ -149,3 +153,6 @@ class query():
             obj["dateTaken_gt"] = obj.pop("_dateTaken_gt")
         return obj
 
+class mutti(image):
+    def __init__(self):
+        print()

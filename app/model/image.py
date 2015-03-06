@@ -3,9 +3,52 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from PIL import Image, ImageOps
 from PIL import ExifTags
-from app import imagesDB
-from app import ImagePersistedFields
 from app import *
+
+
+
+class imagebase():
+
+    def __init__(self):
+        self.filename = ""
+        self.original_path = ""
+        self.large_path = ""
+        self.medium_path = ""
+        self.thumb_path = ""
+        self.size = ""
+
+        self.make = ""
+        self.model = ""
+        self.ImageUniqueID = ""
+
+        self.has_exif = ""
+
+        self.id = ""
+
+        self.date_taken = ""
+        #self._year = ""
+        #self._month = ""
+        #self._day = ""
+
+
+
+    @property
+    def year(self):
+        if self.date_taken:
+            return datetime.year(self.date_taken)
+
+    @property
+    def month(self):
+        if self.date_taken:
+            return datetime.month(self.date_taken)
+
+    @property
+    def day(self):
+        if self.date_taken:
+            return datetime.day(self.date_taken)
+
+
+
 
 class image():
     def __init__(self, imageSource=None, id=None):
@@ -27,16 +70,28 @@ class image():
             imageSource = imagesDB.find_one({'_id':ObjectId(id)})
 
         if isinstance(imageSource, str):
-            self.imageFromFile(imageSource)
+            self._image_from_file(imageSource)
         else:
-            self.imageFromDB(imageSource)
+            self._image_from_db(imageSource)
 
 
+    def _generate_files(self, file):
+        self.originalPath = file
+        self.filename = os.path.split(file)[1]
+        webimages_path = app.config["IMAGE_THUMBS"] + self.originalPath.replace(app.config["IMAGE_STORE"], "").replace(
+            self.filename, "")
+        self._ensure_dir(webimages_path)
+        fn, ext = os.path.splitext(self.filename)
+        self.thumbPath = "%s%s_tm%s" % (webimages_path, fn, ext)
+        self.mediumPath = "%s%s_md%s" % (webimages_path, fn, ext)
+        self.largePath = "%s%s_lg%s" % (webimages_path, fn, ext)
+        self._generate_webimages()
+        self.size = os.path.getsize(file)
 
-    def imageFromFile(self, imageSource):
+    def _image_from_file(self, file):
 
         try:
-            self.exif = self.getEXIF(imageSource)
+            self.exif = self._get_exif(file)
 
             if self.exif == None:
                 self.hasEXIF = False
@@ -61,26 +116,13 @@ class image():
 
                 self.hasEXIF = True
 
-                self.originalPath = imageSource
-                self.filename  = os.path.split(imageSource)[1]
-
-                webimages_path = app.config["IMAGE_THUMBS"] + self.originalPath.replace(app.config["IMAGE_STORE"],"").replace(self.filename,"")
-                self.ensure_dir(webimages_path)
-
-                fn, ext = os.path.splitext(self.filename)
-
-                self.thumbPath = "%s%s_tm%s" % (webimages_path, fn, ext)
-                self.mediumPath = "%s%s_md%s" % (webimages_path, fn, ext)
-                self.largePath = "%s%s_lg%s" % (webimages_path, fn, ext)
-
-                self.generate_webimages()
-                self.size = os.path.getsize(imageSource)
+                self._generate_files(file)
         except Exception as e:
             print(e.args[0])
 
-        self.persist()
+        self._save()
 
-    def ensure_dir(self,dirname):
+    def _ensure_dir(self,dirname):
         """
         Ensure that a named directory exists; if it does not, attempt to create it.
         """
@@ -90,16 +132,16 @@ class image():
             if e.errno != errno.EEXIST:
                 raise
 
-    def imageFromDB(self, imageSource):
+    def _image_from_db(self, record):
         blacklist = [ "exif"]
-        for field in imageSource:
+        for field in record:
             if not field in blacklist:
                 if field == "_id":
-                    setattr(self,"id",imageSource[field])
+                    setattr(self,"id",record[field])
                 else:
-                    setattr(self,field,imageSource[field])
+                    setattr(self,field,record[field])
 
-    def persist(self):
+    def _save(self):
         imgobject = {}
         blacklist = ["id", "exif"]
         for field in self.__dict__:#ImagePersistedFields:
@@ -109,7 +151,7 @@ class image():
         print()
 
 
-    def getEXIF(self, file):
+    def _get_exif(self, file):
 
         try:
             imgFile=Image.open(file,'r')
@@ -125,7 +167,7 @@ class image():
     def __str__(self):
         return self.path
 
-    def generate_webimages(self):
+    def _generate_webimages(self):
 
         im = Image.open(self.originalPath)
 
@@ -134,11 +176,11 @@ class image():
         if not os.path.isfile(self.mediumPath):
 
             im.thumbnail(size, Image.ANTIALIAS)
-            im.save(self.mediumPath, "JPEG")
+            im._save(self.mediumPath, "JPEG")
 
         size = (256, 256)
 
         if not os.path.isfile(self.thumbPath):
 
             thumb = ImageOps.fit(im, size, Image.ANTIALIAS)
-            thumb.save(self.thumbPath, "JPEG")
+            thumb._save(self.thumbPath, "JPEG")

@@ -85,13 +85,28 @@ def addCollection():
 
     form = newCollectionForm(   )
     if request.method == "POST" and form.validate():
+
+
+        j_str = {}
+        if form.make.data:
+            j_str["make"] = form.make.data
+
+        if form.make.data:
+            j_str["model"] = form.model.data
+
+        if form.dateTaken_gt.data:
+            j_str["dateTaken"]["$gt"] = form.dateTaken_gt.data
+
+        if form.dateTaken_lt.data:
+            j_str["dateTaken"]["$lt"] = form.dateTaken_lt.data
+
         col = imageCollection()
         col.query.make = form.make.data
         col.query.model = form.model.data
         col.name = form.collectionName.data
         col.query.dateTaken_gt = form.dateTaken_gt.data
         col.query.dateTaken_lt = form.dateTaken_lt.data
-        col.save()
+        col._save()
         flash(col.imagecount)
         return redirect('/addcollection')
     return render_template('addCollection.html', title="Add new collection", form=form)
@@ -118,7 +133,7 @@ def addCol():
         col.query.dateTaken_gt = datetime.date(2014, i, 1)
         m = calendar.monthrange(2014,i)
         col.query.dateTaken_lt = datetime.date(2014, i, m[1])
-        col.save()
+        col._save()
 
     return redirect('/collections')
 
