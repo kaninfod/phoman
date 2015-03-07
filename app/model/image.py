@@ -4,7 +4,9 @@ from datetime import datetime
 from PIL import Image, ImageOps
 from PIL import ExifTags
 from app import *
-
+from bson import json_util
+import json
+import datetime
 
 
 class imagebase():
@@ -26,48 +28,73 @@ class imagebase():
         self.id = ""
 
         self.date_taken = ""
-        #self._year = ""
-        #self._month = ""
-        #self._day = ""
 
+class image_query(imagebase):
 
+    def __init__(self):
+        self._query = {}
+        self.date_taken_gte = ""
+        self.date_taken_lt = ""
+
+    def gt_date(self, date, date_field="date_taken"):
+        if isinstance(date, datetime.date):
+            date = self._date_to_datetime(date)
+
+        if date_field in self._query:
+            self._query[date_field].update({"$gte":date})
+        else:
+            self._query[date_field] = {"$gte":date}
+
+        self.date_taken_gte = date
+
+    def lt_date(self, date, date_field="date_taken"):
+        if isinstance(date, datetime.date):
+            date = self._date_to_datetime(date)
+
+        if date_field in self._query:
+            self._query[date_field].update({"$lt":date})
+        else:
+            self._query[date_field] = {"$lt":date}
+
+        self.date_taken_lt = date
+
+    def __setattr__(self, name, value):
+        _blacklist = ["_query", "date_taken_lt", "date_taken_gte"]
+        if not name in _blacklist and value != "":
+            self._query[name] = value
+        object.__setattr__(self, name, value)
+
+    def _date_to_datetime(self, date):
+        return datetime.datetime.combine(date, datetime.time.min)
 
     @property
-    def year(self):
-        if self.date_taken:
-            return datetime.year(self.date_taken)
+    def query(self):
+        if self._query:
+            return json.dumps(self._query, default=json_util.default)
+        else:
+            return None
 
-    @property
-    def month(self):
-        if self.date_taken:
-            return datetime.month(self.date_taken)
-
-    @property
-    def day(self):
-        if self.date_taken:
-            return datetime.day(self.date_taken)
+    @query.setter
+    def query(self, value):
+        self._query = json.loads(value, object_hook=json_util.object_hook)
 
 
+    def serialize(self):
+        t = self.__dict__.copy()
+        t.pop("_query")
+        t.update( {"query":self.query} )
+
+        return t
+        #return json.dumps(self.__dict__, default=json_util.default)
 
 
-class image():
+class image(imagebase):
     def __init__(self, imageSource=None, id=None):
-
-
-        self.exif = None
-
-        for field in ImagePersistedFields:
-            setattr(self,field,None)
-
-        self.filename = ""
-        self.originalPath = ""
-        self.largePath = ""
-        self.mediumPath = ""
-        self.thumbPath = ""
 
 
         if id:
             imageSource = imagesDB.find_one({'_id':ObjectId(id)})
+
 
         if isinstance(imageSource, str):
             self._image_from_file(imageSource)
@@ -76,15 +103,15 @@ class image():
 
 
     def _generate_files(self, file):
-        self.originalPath = file
+        self.original_path = file
         self.filename = os.path.split(file)[1]
-        webimages_path = app.config["IMAGE_THUMBS"] + self.originalPath.replace(app.config["IMAGE_STORE"], "").replace(
-            self.filename, "")
-        self._ensure_dir(webimages_path)
+        _webimages_path = app.config["IMAGE_THUMBS"] + \
+                          self.original_path.replace(app.config["IMAGE_STORE"], "").replace(self.filename, "")
+        self._ensure_dir(_webimages_path)
         fn, ext = os.path.splitext(self.filename)
-        self.thumbPath = "%s%s_tm%s" % (webimages_path, fn, ext)
-        self.mediumPath = "%s%s_md%s" % (webimages_path, fn, ext)
-        self.largePath = "%s%s_lg%s" % (webimages_path, fn, ext)
+        self.thumb_path = "%s%s_tm%s" % (_webimages_path, fn, ext)
+        self.medium_path = "%s%s_md%s" % (_webimages_path, fn, ext)
+        self.large_path = "%s%s_lg%s" % (_webimages_path, fn, ext)
         self._generate_webimages()
         self.size = os.path.getsize(file)
 
@@ -100,10 +127,7 @@ class image():
                     photoDate = str(self.exif["DateTimeOriginal"])
                 elif "DateTime" in self.exif:
                     photoDate = str(self.exif["DateTime"])
-                self.dateTaken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
-                self.year = self.dateTaken.year
-                self.month = self.dateTaken.month
-                self.day = self.dateTaken.day
+                self.date_taken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
 
                 if "Make" in self.exif:
                     self.make = self.exif["Make"]
@@ -114,7 +138,7 @@ class image():
                 if "ImageUniqueID" in self.exif:
                     self.ImageUniqueID = self.exif["ImageUniqueID"]
 
-                self.hasEXIF = True
+                self.has_exif = True
 
                 self._generate_files(file)
         except Exception as e:
@@ -137,18 +161,18 @@ class image():
         for field in record:
             if not field in blacklist:
                 if field == "_id":
-                    setattr(self,"id",record[field])
+                    setattr(self,"id",str(record[field]))
                 else:
                     setattr(self,field,record[field])
 
     def _save(self):
         imgobject = {}
         blacklist = ["id", "exif"]
-        for field in self.__dict__:#ImagePersistedFields:
+        for field in self.__dict__:
             if not field in blacklist:
                 imgobject[field] = getattr(self,field)
-        im_id = imagesDB.update({"dateTaken":self.dateTaken}, {"$set":imgobject}, upsert=True)
-        print()
+        im_id = imagesDB.update({"date_taken":self.date_taken}, {"$set":imgobject}, upsert=True)
+
 
 
     def _get_exif(self, file):
@@ -169,18 +193,18 @@ class image():
 
     def _generate_webimages(self):
 
-        im = Image.open(self.originalPath)
+        im = Image.open(self.original_path)
 
         size = 800, 640
 
-        if not os.path.isfile(self.mediumPath):
+        if not os.path.isfile(self.medium_path):
 
             im.thumbnail(size, Image.ANTIALIAS)
-            im._save(self.mediumPath, "JPEG")
+            im._save(self.medium_path, "JPEG")
 
         size = (256, 256)
 
-        if not os.path.isfile(self.thumbPath):
+        if not os.path.isfile(self.thumb_path):
 
             thumb = ImageOps.fit(im, size, Image.ANTIALIAS)
-            thumb._save(self.thumbPath, "JPEG")
+            thumb._save(self.thumb_path, "JPEG")

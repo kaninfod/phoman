@@ -6,7 +6,7 @@ from app import collectionsDB
 from app import imagesDB
 from app.model import *
 from app.model.imageCollection import imageCollection
-from app.model.image import image
+from app.model.image import image, image_query
 import datetime
 import calendar
 from .forms import newCollectionForm
@@ -28,11 +28,11 @@ def imagestore(id, size):
     im = image(id=id)
 
     if size == "tm":
-        path = im.thumbPath
+        path = im.thumb_path
     elif size == "md":
-        path = im.mediumPath
+        path = im.medium_path
     elif size == "lg":
-        path = im.largePath
+        path = im.large_path
 
 
     return send_file(path)
@@ -49,18 +49,9 @@ def images(id, page):
 
     perPage = 20
 
-    if "image_collection" in session:
-        data = session["image_collection"]["data"]
-        pagination = common.pagination(page, perPage, data.imagecount)
-        data = data[pagination.min_rec:pagination.max_rec]
-    else:
-        data = imageCollection(id)
-        #session["image_collection"] = {"id": data.id,
-        #                           "collection":data}
-        c = data.serialize()
-        session["image_collection"] = data
-        pagination = common.pagination(page, perPage, data.imagecount)
-        data = data[pagination.min_rec:pagination.max_rec]
+    data = imageCollection(id)
+    pagination = common.pagination(page, perPage, data.imagecount)
+    data = data[pagination.min_rec:pagination.max_rec]
 
 
 
@@ -86,26 +77,12 @@ def addCollection():
     form = newCollectionForm(   )
     if request.method == "POST" and form.validate():
 
-
-        j_str = {}
-        if form.make.data:
-            j_str["make"] = form.make.data
-
-        if form.make.data:
-            j_str["model"] = form.model.data
-
-        if form.dateTaken_gt.data:
-            j_str["dateTaken"]["$gt"] = form.dateTaken_gt.data
-
-        if form.dateTaken_lt.data:
-            j_str["dateTaken"]["$lt"] = form.dateTaken_lt.data
-
         col = imageCollection()
         col.query.make = form.make.data
         col.query.model = form.model.data
         col.name = form.collectionName.data
-        col.query.dateTaken_gt = form.dateTaken_gt.data
-        col.query.dateTaken_lt = form.dateTaken_lt.data
+        col.query.date_taken_gte = form.dateTaken_gt.data
+        col.query.date_taken_lt = form.dateTaken_lt.data
         col._save()
         flash(col.imagecount)
         return redirect('/addcollection')
@@ -129,10 +106,10 @@ def addCol():
     for i in range(1,12):
         col = imageCollection()
         col.name = "2014-%s" % i
-
-        col.query.dateTaken_gt = datetime.date(2014, i, 1)
+        date = datetime.date(2014, i, 1)
+        col.query.gt_date(date)
         m = calendar.monthrange(2014,i)
-        col.query.dateTaken_lt = datetime.date(2014, i, m[1])
+        col.query.lt_date(datetime.date(2014, i, m[1]))
         col._save()
 
     return redirect('/collections')
