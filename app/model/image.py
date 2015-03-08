@@ -111,7 +111,7 @@ class image_query(imagebase):
     def __setattr__(self, name, value):
         _blacklist = ["_query", "date_taken_lt", "date_taken_gte"]
         if not name in _blacklist and value != "":
-            self._query[name] = value
+            self._query[name] = value#do the whole thing here!!
         object.__setattr__(self, name, value)
 
     def _date_to_datetime(self, date):
