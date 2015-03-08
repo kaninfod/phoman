@@ -6,7 +6,7 @@ from app import collectionsDB
 from app import imagesDB
 from app.model import *
 from app.model.imageCollection import imageCollection
-from app.model.image import image, image_query
+from app.model.image import image, image_query, operators
 import datetime
 import calendar
 from .forms import newCollectionForm
@@ -103,6 +103,15 @@ def home():
 
 @app.route('/addCol')
 def addCol():
+
+    k = imageCollection()
+    k.query.set_query_field("make", "Nexus 5", operators.equals)
+    k.query.set_query_field("make", "LGE", operators.greater_than)
+    k.query.set_query_field("date_taken", datetime.date(2014,5,1), operators.greater_than)
+    k.query.set_query_field("date_taken", datetime.date(2014,6,1), operators.less_than)
+
+    g= k.query.query_string()
+
     for i in range(1,12):
         col = imageCollection()
         col.name = "2014-%s" % i

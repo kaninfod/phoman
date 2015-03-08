@@ -74,7 +74,7 @@ class imageCollection():
 
     def _get_images(self):
         if self.id:
-            self.cursor = imagesDB.find((self.query._query))
+            self.cursor = imagesDB.find((self.query._query)).sort("date_taken")
             self.imagecount = self.cursor.count()
             i = collectionsDB.update({"_id":self.id}, {"$set":{"imagecount":self.imagecount}}, upsert=False)
 

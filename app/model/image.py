@@ -7,34 +7,82 @@ from app import *
 from bson import json_util
 import json
 import datetime
+from enum import Enum
 
 
 class imagebase():
 
     def __init__(self):
-        self.filename = ""
-        self.original_path = ""
-        self.large_path = ""
-        self.medium_path = ""
-        self.thumb_path = ""
-        self.size = ""
+        self.filename = None
+        self.original_path = None
+        self.large_path = None
+        self.medium_path = None
+        self.thumb_path = None
+        self.size = None
 
-        self.make = ""
-        self.model = ""
-        self.ImageUniqueID = ""
+        self.make = None
+        self.model = None
+        self.ImageUniqueID = None
 
-        self.has_exif = ""
+        self.has_exif = None
 
-        self.id = ""
+        self.id = None
 
-        self.date_taken = ""
+        self.date_taken = None
+
+class operators(Enum):
+        equals = 1
+        greater_than = 2
+        less_than = 3
 
 class image_query(imagebase):
 
     def __init__(self):
+
         self._query = {}
+        self.xyz = {}
         self.date_taken_gte = ""
         self.date_taken_lt = ""
+        super().__init__()
+
+
+    def set_query_field(self, field, value,  operator):
+
+
+        if field in self.__dict__:
+            current_value = []
+
+            current_value = getattr(self, field, None)
+            if current_value:
+                key = len(current_value) + 1
+                current_value.append({
+                    "operator": operator,
+                    "value" : value}
+                )
+            else:
+
+                current_value = [{
+                    "operator": operator,
+                    "value" : value}
+                ]
+
+            setattr(self, field,current_value)
+
+
+    def query_string(self):
+
+        _blacklist = ["_query", "__query", "date_taken_gte", 'date_taken_lt']
+        for field in self.__dict__:
+            if field not in _blacklist and getattr(self,field) :
+                    f = getattr(self,field)
+                    for entry in f:
+                        self.xyz.update(
+                            {
+                                field:entry["value"]
+                            }
+                        )
+
+
 
     def gt_date(self, date, date_field="date_taken"):
         if isinstance(date, datetime.date):
@@ -48,8 +96,10 @@ class image_query(imagebase):
         self.date_taken_gte = date
 
     def lt_date(self, date, date_field="date_taken"):
+        #convert datetime to date
         if isinstance(date, datetime.date):
             date = self._date_to_datetime(date)
+
 
         if date_field in self._query:
             self._query[date_field].update({"$lt":date})
