@@ -2,8 +2,8 @@ __author__ = 'martin'
 
 import os
 from app import *
-from app.model.image import image
-from app.model.imageCollection import imageCollection
+
+from app.model.imageCollection import imageCollection, image
 from app import collectionsDB
 from math import ceil
 from bson import json_util
@@ -20,6 +20,7 @@ def indexImages():
                 img = image(fn)
 
 def findImages():
+
     imgcol = imageCollection()
     print()
 

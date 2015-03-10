@@ -1,6 +1,5 @@
 import os, errno
 from bson.objectid import ObjectId
-from datetime import datetime
 from PIL import Image, ImageOps
 from PIL import ExifTags
 from app import *
@@ -9,25 +8,35 @@ import json
 import datetime
 
 
+
+
 class imagebase():
+    db_filename = ""
+    db_original_path = ""
+    db_large_path = ""
+    db_medium_path = ""
+    db_thumb_path = ""
+    db_size = ""
+    db_make = ""
+    db_model = ""
+    db_ImageUniqueID = ""
+    db_has_exif = ""
+    db_id = ""
+    db_date_taken = ""
 
-    def __init__(self):
-        self.filename = ""
-        self.original_path = ""
-        self.large_path = ""
-        self.medium_path = ""
-        self.thumb_path = ""
-        self.size = ""
+    def __mongo_attributes__(self):
 
-        self.make = ""
-        self.model = ""
-        self.ImageUniqueID = ""
+        return [i for i in dir(self)  if i.startswith('db_')]
 
-        self.has_exif = ""
+    def __mongo_save__(self):
+        imgobject = {}
 
-        self.id = ""
+        for field in self.__mongo_attributes__():
+            imgobject[field] = getattr(self,field)
+        im_id = imagesDB.update({"date_taken":self.db_date_taken}, {"$set":imgobject}, upsert=True)
 
-        self.date_taken = ""
+
+
 
 class image_query(imagebase):
 
@@ -89,12 +98,13 @@ class image_query(imagebase):
 
 
 class image(imagebase):
+    THUMB_SIZE = (256,256)
+    MEDIUM_SIZE = (600,800)
+    LARGE_SIZE = (1024,1200
+    )
     def __init__(self, imageSource=None, id=None):
-
-
         if id:
             imageSource = imagesDB.find_one({'_id':ObjectId(id)})
-
 
         if isinstance(imageSource, str):
             self._image_from_file(imageSource)
@@ -102,18 +112,6 @@ class image(imagebase):
             self._image_from_db(imageSource)
 
 
-    def _generate_files(self, file):
-        self.original_path = file
-        self.filename = os.path.split(file)[1]
-        _webimages_path = app.config["IMAGE_THUMBS"] + \
-                          self.original_path.replace(app.config["IMAGE_STORE"], "").replace(self.filename, "")
-        self._ensure_dir(_webimages_path)
-        fn, ext = os.path.splitext(self.filename)
-        self.thumb_path = "%s%s_tm%s" % (_webimages_path, fn, ext)
-        self.medium_path = "%s%s_md%s" % (_webimages_path, fn, ext)
-        self.large_path = "%s%s_lg%s" % (_webimages_path, fn, ext)
-        self._generate_webimages()
-        self.size = os.path.getsize(file)
 
     def _image_from_file(self, file):
 
@@ -121,30 +119,32 @@ class image(imagebase):
             self.exif = self._get_exif(file)
 
             if self.exif == None:
-                self.hasEXIF = False
+                self.db_has_exif = False
+                self.db_date_taken = datetime.datetime(1972,6,24,0)
             else:
                 if "DateTimeOriginal" in self.exif:
                     photoDate = str(self.exif["DateTimeOriginal"])
                 elif "DateTime" in self.exif:
                     photoDate = str(self.exif["DateTime"])
-                self.date_taken = datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
+                self.db_date_taken = datetime.datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
+
 
                 if "Make" in self.exif:
-                    self.make = self.exif["Make"]
+                    self.db_make = self.exif["Make"]
 
                 if "Model" in self.exif:
-                    self.model = self.exif["Model"]
+                    self.db_model = self.exif["Model"]
 
                 if "ImageUniqueID" in self.exif:
-                    self.ImageUniqueID = self.exif["ImageUniqueID"]
+                    self.db_ImageUniqueID = self.exif["ImageUniqueID"]
 
-                self.has_exif = True
+                self.db_has_exif = True
 
-                self._generate_files(file)
+            self._generate_files(file)
         except Exception as e:
             print(e.args[0])
 
-        self._save()
+        self.__mongo_save__()
 
     def _ensure_dir(self,dirname):
         """
@@ -171,7 +171,7 @@ class image(imagebase):
         for field in self.__dict__:
             if not field in blacklist:
                 imgobject[field] = getattr(self,field)
-        im_id = imagesDB.update({"date_taken":self.date_taken}, {"$set":imgobject}, upsert=True)
+        im_id = imagesDB.update({"date_taken":self.db_date_taken}, {"$set":imgobject}, upsert=True)
 
 
 
@@ -191,20 +191,35 @@ class image(imagebase):
     def __str__(self):
         return self.path
 
+
+    def _generate_files(self, file):
+        self.db_original_path = file
+        self.db_filename = os.path.split(file)[1]
+        _webimages_path = app.config["IMAGE_THUMBS"] + \
+                          self.db_original_path.replace(app.config["IMAGE_STORE"], "").replace(self.db_filename, "")
+        self._ensure_dir(_webimages_path)
+        fn, ext = os.path.splitext(self.db_filename)
+        self.db_thumb_path = "%s%s_tm%s" % (_webimages_path, fn, ext)
+        self.db_medium_path = "%s%s_md%s" % (_webimages_path, fn, ext)
+        self.db_large_path = "%s%s_lg%s" % (_webimages_path, fn, ext)
+        self._generate_webimages()
+        self.db_size = os.path.getsize(file)
+
     def _generate_webimages(self):
 
-        im = Image.open(self.original_path)
+        im = Image.open(self.db_original_path)
+        self.generate_image(im, self.db_medium_path, self.MEDIUM_SIZE)
+        self.generate_thumb(im, self.db_thumb_path,self.THUMB_SIZE)
 
-        size = 800, 640
+    def generate_image(self, image, path, size):
 
-        if not os.path.isfile(self.medium_path):
+        if not os.path.isfile(self.db_medium_path):
+            image.thumbnail(size, Image.ANTIALIAS)
+            image.save(path, "JPEG")
 
-            im.thumbnail(size, Image.ANTIALIAS)
-            im._save(self.medium_path, "JPEG")
 
-        size = (256, 256)
+    def generate_thumb(self, image, path, size):
 
-        if not os.path.isfile(self.thumb_path):
-
-            thumb = ImageOps.fit(im, size, Image.ANTIALIAS)
-            thumb._save(self.thumb_path, "JPEG")
+        if not os.path.isfile(path):
+            thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
+            thumb.save(path, "JPEG")

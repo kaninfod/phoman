@@ -16,6 +16,7 @@ from flask import request, flash, redirect, url_for, send_file, session
 
 @app.route('/sync')
 def sync():
+
     common.indexImages()
 
 
@@ -28,11 +29,11 @@ def imagestore(id, size):
     im = image(id=id)
 
     if size == "tm":
-        path = im.thumb_path
+        path = im.db_thumb_path
     elif size == "md":
-        path = im.medium_path
+        path = im.db_medium_path
     elif size == "lg":
-        path = im.large_path
+        path = im.db_large_path
 
 
     return send_file(path)
@@ -78,8 +79,8 @@ def addCollection():
     if request.method == "POST" and form.validate():
 
         col = imageCollection()
-        col.query.make = form.make.data
-        col.query.model = form.model.data
+        col.query.db_make = form.make.data
+        col.query.db_model = form.model.data
         col.name = form.collectionName.data
         col.query.date_taken_gte = form.dateTaken_gt.data
         col.query.date_taken_lt = form.dateTaken_lt.data
@@ -103,6 +104,9 @@ def home():
 
 @app.route('/addCol')
 def addCol():
+
+
+
     for i in range(1,12):
         col = imageCollection()
         col.name = "2014-%s" % i
@@ -110,6 +114,15 @@ def addCol():
         col.query.gt_date(date)
         m = calendar.monthrange(2014,i)
         col.query.lt_date(datetime.date(2014, i, m[1]))
+        col._save()
+
+    for i in range(1,3):
+        col = imageCollection()
+        col.name = "2015-%s" % i
+        date = datetime.date(2015, i, 1)
+        col.query.gt_date(date)
+        m = calendar.monthrange(2015,i)
+        col.query.lt_date(datetime.date(2015, i, m[1]))
         col._save()
 
     return redirect('/collections')
