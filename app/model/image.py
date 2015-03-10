@@ -2,10 +2,12 @@ import os, errno
 from bson.objectid import ObjectId
 from PIL import Image, ImageOps
 from PIL import ExifTags
+from PIL.ExifTags import TAGS, GPSTAGS
 from app import *
 from bson import json_util
 import json
 import datetime
+from geopy.geocoders import Nominatim
 
 
 
@@ -23,6 +25,8 @@ class imagebase():
     db_has_exif = ""
     db_id = ""
     db_date_taken = ""
+    db_latitude = ""
+    db_longitude = ""
 
     def __mongo_attributes__(self):
 
@@ -100,8 +104,8 @@ class image_query(imagebase):
 class image(imagebase):
     THUMB_SIZE = (256,256)
     MEDIUM_SIZE = (600,800)
-    LARGE_SIZE = (1024,1200
-    )
+    LARGE_SIZE = (1024,1200)
+
     def __init__(self, imageSource=None, id=None):
         if id:
             imageSource = imagesDB.find_one({'_id':ObjectId(id)})
@@ -138,6 +142,12 @@ class image(imagebase):
                 if "ImageUniqueID" in self.exif:
                     self.db_ImageUniqueID = self.exif["ImageUniqueID"]
 
+                self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
+
+                geolocator = Nominatim()
+                location = geolocator.reverse("%s,%s2" % (self.db_latitude, self.db_longitude))
+                print(location)
+
                 self.db_has_exif = True
 
             self._generate_files(file)
@@ -146,15 +156,7 @@ class image(imagebase):
 
         self.__mongo_save__()
 
-    def _ensure_dir(self,dirname):
-        """
-        Ensure that a named directory exists; if it does not, attempt to create it.
-        """
-        try:
-            os.makedirs(dirname)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+
 
     def _image_from_db(self, record):
         blacklist = [ "exif"]
@@ -177,16 +179,38 @@ class image(imagebase):
 
     def _get_exif(self, file):
 
-        try:
-            imgFile=Image.open(file,'r')
-            exif = {
-                ExifTags.TAGS[k]: v
-                for k, v in imgFile._getexif().items()
-                if k in ExifTags.TAGS
-            }
-            return exif
-        except Exception as e:
-            return None
+        """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
+        exif_data = {}
+        image=Image.open(file,'r')
+        info = image._getexif()
+        if info:
+            for tag, value in info.items():
+                decoded = TAGS.get(tag, tag)
+                if decoded == "GPSInfo":
+                    gps_data = {}
+                    for gps_tag in value:
+                        sub_decoded = GPSTAGS.get(gps_tag, gps_tag)
+                        gps_data[sub_decoded] = value[gps_tag]
+
+                    exif_data[decoded] = gps_data
+                else:
+                    exif_data[decoded] = value
+
+        return exif_data
+
+
+        # try:
+        #     imgFile=Image.open(file,'r')
+        #     exif = {
+        #         ExifTags.TAGS[k]: v
+        #         for k, v in imgFile._getexif().items()
+        #         if k in ExifTags.TAGS
+        #     }
+        #
+        #
+        #     return exif
+        #except Exception as e:
+        #    return None
 
     def __str__(self):
         return self.path
@@ -223,3 +247,70 @@ class image(imagebase):
         if not os.path.isfile(path):
             thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
             thumb.save(path, "JPEG")
+
+    def _ensure_dir(self,dirname):
+        """
+        Ensure that a named directory exists; if it does not, attempt to create it.
+        """
+        try:
+            os.makedirs(dirname)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+
+
+def get_exif_data(image):
+    """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
+    exif_data = {}
+    info = image._getexif()
+    if info:
+        for tag, value in info.items():
+            decoded = TAGS.get(tag, tag)
+            if decoded == "GPSInfo":
+                gps_data = {}
+                for gps_tag in value:
+                    sub_decoded = GPSTAGS.get(gps_tag, gps_tag)
+                    gps_data[sub_decoded] = value[gps_tag]
+
+                exif_data[decoded] = gps_data
+            else:
+                exif_data[decoded] = value
+
+    return exif_data
+
+def _convert_to_degress(value):
+    """Helper function to convert the GPS coordinates stored in the EXIF to degress in float format"""
+    deg_num, deg_denom = value[0]
+    d = float(deg_num) / float(deg_denom)
+
+    min_num, min_denom = value[1]
+    m = float(min_num) / float(min_denom)
+
+    sec_num, sec_denom = value[2]
+    s = float(sec_num) / float(sec_denom)
+
+    return d + (m / 60.0) + (s / 3600.0)
+
+def get_lat_lon(exif_data):
+    """Returns the latitude and longitude, if available, from the provided exif_data (obtained through get_exif_data above)"""
+    lat = None
+    lon = None
+
+    if "GPSInfo" in exif_data:
+        gps_info = exif_data["GPSInfo"]
+
+        gps_latitude = gps_info.get("GPSLatitude")
+        gps_latitude_ref = gps_info.get('GPSLatitudeRef')
+        gps_longitude = gps_info.get('GPSLongitude')
+        gps_longitude_ref = gps_info.get('GPSLongitudeRef')
+
+        if gps_latitude and gps_latitude_ref and gps_longitude and gps_longitude_ref:
+            lat = _convert_to_degress(gps_latitude)
+            if gps_latitude_ref != "N":
+                lat *= -1
+
+            lon = _convert_to_degress(gps_longitude)
+            if gps_longitude_ref != "E":
+                lon *= -1
+
+    return lat, lon
