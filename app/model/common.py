@@ -73,13 +73,3 @@ class pagination(object):
                 last = num
 
 
-class CustomJSONEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, imageCollection):
-            obj_dict = json.dumps(obj,default=json_util.default)
-            return obj_dict
-        else:
-            JSONEncoder.default(self, obj)
-
-# Now tell Flask to use the custom class
-app.json_encoder = CustomJSONEncoder

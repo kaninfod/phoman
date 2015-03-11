@@ -8,7 +8,7 @@ import json
 
 from app.model.image import image, image_query
 from app import collectionsDB, imagesDB
-from app import ImagePersistedFields
+
 
 
 class imageCollection():

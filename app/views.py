@@ -3,14 +3,14 @@ from flask import render_template
 
 from app import app
 from app import collectionsDB
-from app import imagesDB
+import os
 from app.model import *
 from app.model.imageCollection import imageCollection
 from app.model.image import image, image_query
 import datetime
 import calendar
 from .forms import newCollectionForm
-from flask import request, flash, redirect, url_for, send_file, session
+from flask import request, flash, redirect, url_for, send_file
 
 
 
@@ -27,14 +27,17 @@ def sync():
 def imagestore(id, size):
 
     im = image(id=id)
+    if im:
+        if size == "tm":
+            path = im.db_thumb_path
+        elif size == "md":
+            path = im.db_medium_path
+        elif size == "lg":
+            path = im.db_large_path
 
-    if size == "tm":
-        path = im.db_thumb_path
-    elif size == "md":
-        path = im.db_medium_path
-    elif size == "lg":
-        path = im.db_large_path
 
+    #if not os.path.isfile(path):
+    #    return url_for('static', filename='img/img_not_found.jpg')
 
     return send_file(path)
 

@@ -1,32 +1,37 @@
 import os, errno
 from bson.objectid import ObjectId
 from PIL import Image, ImageOps
-from PIL import ExifTags
-from PIL.ExifTags import TAGS, GPSTAGS
+
 from app import *
 from bson import json_util
 import json
 import datetime
 from geopy.geocoders import Nominatim
-
+from app.model.exif_data_handler import get_exif_data, get_lat_lon
 
 
 
 class imagebase():
-    db_filename = ""
-    db_original_path = ""
-    db_large_path = ""
-    db_medium_path = ""
-    db_thumb_path = ""
-    db_size = ""
-    db_make = ""
-    db_model = ""
-    db_ImageUniqueID = ""
-    db_has_exif = ""
-    db_id = ""
-    db_date_taken = ""
-    db_latitude = ""
-    db_longitude = ""
+    db_filename = None
+    db_original_path = None
+    db_large_path = None
+    db_medium_path = None
+    db_thumb_path = None
+    db_size = None
+    db_make = None
+    db_model = None
+    db_ImageUniqueID = None
+    db_has_exif = None
+    db_id = None
+    db_date_taken = None
+    db_latitude = None
+    db_longitude = None
+    db_original_height = None
+    db_original_width = None
+    db_orientation = None
+    db_flash_fired = None
+
+
 
     def __mongo_attributes__(self):
 
@@ -36,10 +41,17 @@ class imagebase():
         imgobject = {}
 
         for field in self.__mongo_attributes__():
-            imgobject[field] = getattr(self,field)
+            if not field == "db_id":
+                imgobject[field] = getattr(self,field)
         im_id = imagesDB.update({"date_taken":self.db_date_taken}, {"$set":imgobject}, upsert=True)
 
-
+    def __mongo_populate__(self, record):
+        blacklist = [ "exif"]
+        for field in self.__mongo_attributes__():
+            if field == "db_id":
+                setattr(self,"db_id",str(record["_id"]))
+            else:
+                setattr(self,field,record[field])
 
 
 class image_query(imagebase):
@@ -113,108 +125,58 @@ class image(imagebase):
         if isinstance(imageSource, str):
             self._image_from_file(imageSource)
         else:
-            self._image_from_db(imageSource)
+            self.__mongo_populate__(imageSource)
 
 
 
     def _image_from_file(self, file):
 
-        try:
-            self.exif = self._get_exif(file)
 
-            if self.exif == None:
-                self.db_has_exif = False
-                self.db_date_taken = datetime.datetime(1972,6,24,0)
-            else:
-                if "DateTimeOriginal" in self.exif:
-                    photoDate = str(self.exif["DateTimeOriginal"])
-                elif "DateTime" in self.exif:
-                    photoDate = str(self.exif["DateTime"])
-                self.db_date_taken = datetime.datetime.strptime(photoDate, "%Y:%m:%d %H:%M:%S")
+        image=Image.open(file,'r')
+        self.exif = get_exif_data(image)
+
+        if self.exif == None:
+            self.db_has_exif = False
+            self.db_date_taken = datetime.datetime(1972,6,24,0)
+        else:
 
 
-                if "Make" in self.exif:
-                    self.db_make = self.exif["Make"]
+            if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
+                if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
+                    self.db_date_taken = datetime.datetime(1972,6,24,0)
 
-                if "Model" in self.exif:
-                    self.db_model = self.exif["Model"]
+            self.db_has_exif = True
+            self.add_exif_data("Make", "db_make")
+            self.add_exif_data("Model", "db_model")
+            self.add_exif_data("ImageUniqueID", "db_ImageUniqueID")
+            self.add_exif_data("ExifImageHeight", "db_original_height")
+            self.add_exif_data("ExifImageWidth", "db_original_width")
+            self.add_exif_data("Orientation", "db_orientation")
+            self.add_exif_data("Flash", "db_flash_fired")
+            self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
 
-                if "ImageUniqueID" in self.exif:
-                    self.db_ImageUniqueID = self.exif["ImageUniqueID"]
-
-                self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
-
-                geolocator = Nominatim()
-                location = geolocator.reverse("%s,%s2" % (self.db_latitude, self.db_longitude))
-                print(location)
-
-                self.db_has_exif = True
-
-            self._generate_files(file)
-        except Exception as e:
-            print(e.args[0])
-
+        self._generate_files(file)
         self.__mongo_save__()
 
+            #geolocator = Nominatim()
+            #location = geolocator.reverse("%s,%s2" % (self.db_latitude, self.db_longitude))
+            #print(location)
 
+    def add_exif_data(self, exif_field, mongo_field):
+        date_fields = ["DateTimeOriginal", "DateTime"]
 
-    def _image_from_db(self, record):
-        blacklist = [ "exif"]
-        for field in record:
-            if not field in blacklist:
-                if field == "_id":
-                    setattr(self,"id",str(record[field]))
-                else:
-                    setattr(self,field,record[field])
-
-    def _save(self):
-        imgobject = {}
-        blacklist = ["id", "exif"]
-        for field in self.__dict__:
-            if not field in blacklist:
-                imgobject[field] = getattr(self,field)
-        im_id = imagesDB.update({"date_taken":self.db_date_taken}, {"$set":imgobject}, upsert=True)
-
-
-
-    def _get_exif(self, file):
-
-        """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
-        exif_data = {}
-        image=Image.open(file,'r')
-        info = image._getexif()
-        if info:
-            for tag, value in info.items():
-                decoded = TAGS.get(tag, tag)
-                if decoded == "GPSInfo":
-                    gps_data = {}
-                    for gps_tag in value:
-                        sub_decoded = GPSTAGS.get(gps_tag, gps_tag)
-                        gps_data[sub_decoded] = value[gps_tag]
-
-                    exif_data[decoded] = gps_data
-                else:
-                    exif_data[decoded] = value
-
-        return exif_data
-
-
-        # try:
-        #     imgFile=Image.open(file,'r')
-        #     exif = {
-        #         ExifTags.TAGS[k]: v
-        #         for k, v in imgFile._getexif().items()
-        #         if k in ExifTags.TAGS
-        #     }
-        #
-        #
-        #     return exif
-        #except Exception as e:
-        #    return None
+        if exif_field in self.exif:
+            if exif_field in date_fields:
+                date_string = str(self.exif[exif_field])
+                date_format = "%Y:%m:%d %H:%M:%S"
+                date = datetime.datetime.strptime(date_string, date_format)
+                setattr(self,mongo_field,date)
+            else:
+                setattr(self,mongo_field,self.exif[exif_field])
+            return 1
 
     def __str__(self):
         return self.path
-
 
     def _generate_files(self, file):
         self.db_original_path = file
@@ -259,58 +221,3 @@ class image(imagebase):
                 raise
 
 
-def get_exif_data(image):
-    """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
-    exif_data = {}
-    info = image._getexif()
-    if info:
-        for tag, value in info.items():
-            decoded = TAGS.get(tag, tag)
-            if decoded == "GPSInfo":
-                gps_data = {}
-                for gps_tag in value:
-                    sub_decoded = GPSTAGS.get(gps_tag, gps_tag)
-                    gps_data[sub_decoded] = value[gps_tag]
-
-                exif_data[decoded] = gps_data
-            else:
-                exif_data[decoded] = value
-
-    return exif_data
-
-def _convert_to_degress(value):
-    """Helper function to convert the GPS coordinates stored in the EXIF to degress in float format"""
-    deg_num, deg_denom = value[0]
-    d = float(deg_num) / float(deg_denom)
-
-    min_num, min_denom = value[1]
-    m = float(min_num) / float(min_denom)
-
-    sec_num, sec_denom = value[2]
-    s = float(sec_num) / float(sec_denom)
-
-    return d + (m / 60.0) + (s / 3600.0)
-
-def get_lat_lon(exif_data):
-    """Returns the latitude and longitude, if available, from the provided exif_data (obtained through get_exif_data above)"""
-    lat = None
-    lon = None
-
-    if "GPSInfo" in exif_data:
-        gps_info = exif_data["GPSInfo"]
-
-        gps_latitude = gps_info.get("GPSLatitude")
-        gps_latitude_ref = gps_info.get('GPSLatitudeRef')
-        gps_longitude = gps_info.get('GPSLongitude')
-        gps_longitude_ref = gps_info.get('GPSLongitudeRef')
-
-        if gps_latitude and gps_latitude_ref and gps_longitude and gps_longitude_ref:
-            lat = _convert_to_degress(gps_latitude)
-            if gps_latitude_ref != "N":
-                lat *= -1
-
-            lon = _convert_to_degress(gps_longitude)
-            if gps_longitude_ref != "E":
-                lon *= -1
-
-    return lat, lon
