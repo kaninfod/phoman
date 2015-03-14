@@ -1,11 +1,30 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<a href="{{ back_url }}"> <i class="fa fa-long-arrow-left fa-5x"></i></a>
+<div class="col-lg-12">
+    <a href="{{ back_url }}"> <i class="fa fa-long-arrow-left fa-5x"></i></a>
+</div>
+<div class="col-lg-8">
 
-<i class="fa fa-arrow-circle-left fa-5x"></i>
 
-<img src="/imagestore/id/{{ id }}/size/md" class="img-responsive img-thumbnail" alt="pichere">
+    <img src="/imagestore/id/{{ img.db_id }}/size/md" class="img-responsive img-thumbnail" alt="pichere">
+</div>
+<div class="col-lg-4">
+    <div class="list-group">
+      <a href="#" class="list-group-item active">
+        Image Information
+      </a>
+      <a href="#" class="list-group-item">{{ img.db_date_taken }}</a>
+      <a href="#" class="list-group-item">{{ img.db_original_height }}</a>
+      <a href="#" class="list-group-item">{{ img.db_original_width }}</a>
+      <a href="#" class="list-group-item">{{ img.db_tags }}</a>
+      <li class="list-group-item">Tags:
+          {% for tag in img.db_tags %}
 
-<i class="fa fa-arrow-circle-right fa-5x"></i>
+          <span class="badge">{{ tag }}</span>
+          {% endfor %}
+
+      </li>
+    </div>
+</div>
 {% endblock %}

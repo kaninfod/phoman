@@ -6,18 +6,19 @@ from app import *
 from app.model.imageCollection import imageCollection, image
 from app import collectionsDB
 from math import ceil
-from bson import json_util
-import json
 
-
-
-def indexImages():
+def do_loop(loop):
     path = app.config["IMAGE_STORE"]
     for root, dirnames, filenames in os.walk(path):
         for filename in filenames:
             if os.path.splitext(filename)[1] == ".jpg":
                 fn = root + "/" + filename
                 img = image(fn)
+                print(filename)
+    loop.stop()
+
+
+
 
 def findImages():
 

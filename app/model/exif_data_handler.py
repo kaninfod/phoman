@@ -1,6 +1,7 @@
 __author__ = 'hingem'
-
-
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
+from geopy.geocoders import GoogleV3, GeoNames
 
 from PIL.ExifTags import TAGS, GPSTAGS
 
@@ -62,3 +63,20 @@ def get_lat_lon(exif_data):
                 lon *= -1
 
     return lat, lon
+
+def lookup_location(point):
+    #geolocator = GoogleV3("AIzaSyCGSMJfmJI91d8S6q-LK-rSXO-HpJdZjQQ")
+    geolocator = Nominatim(timeout=4)
+
+    try:
+        location = geolocator.reverse(point)
+    except GeocoderTimedOut as e:
+        print(e)
+        return 0
+    except Exception as e:
+        print(e)
+
+    if len(location):
+        return location
+    else:
+        return None

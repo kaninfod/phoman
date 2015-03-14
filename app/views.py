@@ -6,18 +6,24 @@ from app import collectionsDB
 import os
 from app.model import *
 from app.model.imageCollection import imageCollection
+from app.model.album import album
 from app.model.image import image, image_query
 import datetime
 import calendar
 from .forms import newCollectionForm
-from flask import request, flash, redirect, url_for, send_file
+from flask import request, flash, redirect, url_for, send_file, jsonify
 
 
 
 @app.route('/sync')
 def sync():
 
-    common.indexImages()
+    alb = album()
+    alb.name = "my album"
+    alb.tags_include = ["LGE"]
+    alb.tags_exclude = ["Sunday"]
+    alb._get_images()
+    alb.save()
 
 
     return render_template('home.html')
@@ -43,8 +49,8 @@ def imagestore(id, size):
 
 @app.route('/showlarge/id/<id>')
 def showlarge(id):
-
-    return render_template('showlarge.html', back_url=request.referrer,id=id)
+    im = image(id=id)
+    return render_template('showlarge.html', back_url=request.referrer,img=im)
 
 
 @app.route('/images/id/<id>',  defaults={'page':1})
@@ -70,8 +76,6 @@ def collection(page):
     data = collectionsDB.find()
     pagination = common.pagination(page, perPage, data.count())
     data = data[pagination.min_rec:pagination.max_rec]
-
-
 
     return render_template('collections.html', data=data, paginator=pagination)
 
@@ -119,7 +123,7 @@ def addCol():
         col.query.lt_date(datetime.date(2014, i, m[1]))
         col._save()
 
-    for i in range(1,3):
+    for i in range(1,4):
         col = imageCollection()
         col.name = "2015-%s" % i
         date = datetime.date(2015, i, 1)
@@ -129,6 +133,20 @@ def addCol():
         col._save()
 
     return redirect('/collections')
+
+
+
+@app.route('/_add_numbers')
+def add_numbers():
+    a = request.args.get('a', 0, type=int)
+    b = request.args.get('b', 0, type=int)
+    return jsonify(result=a + b)
+
+
+@app.route('/test')
+def index():
+    return render_template('test.html')
+
 
 def url_for_other_page(page):
     args = request.view_args.copy()

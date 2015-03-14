@@ -6,8 +6,8 @@ from app import *
 from bson import json_util
 import json
 import datetime
-from geopy.geocoders import Nominatim
-from app.model.exif_data_handler import get_exif_data, get_lat_lon
+
+from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
 
 
 
@@ -30,6 +30,12 @@ class imagebase():
     db_original_width = None
     db_orientation = None
     db_flash_fired = None
+    db_tags = []
+    db_location = False
+    db_country = None
+    db_state = None
+    db_address = None
+    db_road = None
 
 
 
@@ -43,14 +49,16 @@ class imagebase():
         for field in self.__mongo_attributes__():
             if not field == "db_id":
                 imgobject[field] = getattr(self,field)
+
         im_id = imagesDB.update({"date_taken":self.db_date_taken}, {"$set":imgobject}, upsert=True)
 
+
     def __mongo_populate__(self, record):
-        blacklist = [ "exif"]
-        for field in self.__mongo_attributes__():
-            if field == "db_id":
+
+        for field in record:
+            if field == "_id":
                 setattr(self,"db_id",str(record["_id"]))
-            else:
+            elif "db_" in field:
                 setattr(self,field,record[field])
 
 
@@ -118,7 +126,10 @@ class image(imagebase):
     MEDIUM_SIZE = (600,800)
     LARGE_SIZE = (1024,1200)
 
-    def __init__(self, imageSource=None, id=None):
+
+    def __init__(self, imageSource=None, id=None, update_location=False):
+        self.db_tags = []
+
         if id:
             imageSource = imagesDB.find_one({'_id':ObjectId(id)})
 
@@ -126,11 +137,11 @@ class image(imagebase):
             self._image_from_file(imageSource)
         else:
             self.__mongo_populate__(imageSource)
-
+            if update_location:
+                self.add_location_data()
 
 
     def _image_from_file(self, file):
-
 
         image=Image.open(file,'r')
         self.exif = get_exif_data(image)
@@ -139,6 +150,16 @@ class image(imagebase):
             self.db_has_exif = False
             self.db_date_taken = datetime.datetime(1972,6,24,0)
         else:
+
+            if "ImageUniqueID" in self.exif:
+                db_entry = imagesDB.find_one({'db_ImageUniqueID':self.exif['ImageUniqueID']})
+                if db_entry:
+                    self.db_country = db_entry["db_country"]
+                    self.db_state = db_entry["db_state"]
+                    self.db_road = db_entry["db_road"]
+                    self.db_address = db_entry["db_address"]
+                    self.db_location = db_entry["db_location"]
+
 
 
             if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
@@ -156,13 +177,77 @@ class image(imagebase):
             self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
 
         self._generate_files(file)
+        self.set_tags()
         self.__mongo_save__()
 
-            #geolocator = Nominatim()
-            #location = geolocator.reverse("%s,%s2" % (self.db_latitude, self.db_longitude))
-            #print(location)
+    def add_location_data(self):
 
-    def add_exif_data(self, exif_field, mongo_field):
+
+        if not self.db_location and self.db_latitude and self.db_longitude:
+            print(self.db_location)
+            point = "%s,%s" % (self.db_latitude, self.db_longitude)
+            location = lookup_location(point)
+
+            if location:
+                if "error" in location.raw:
+                    print(location.raw["error"])
+                elif "address" in location.raw:
+                    if "country" in location.raw["address"]:
+                        self.db_country = location.raw["address"]['country']
+                    if "state" in location.raw["address"]:
+                        self.db_state = location.raw["address"]['state']
+                    if "road" in location.raw["address"]:
+                        self.db_road = location.raw["address"]['road']
+
+                    self.db_address = location.raw['display_name']
+
+                    self.db_location = True
+                else:
+                    print()
+            else:
+                self.db_location = False
+        else:
+            print(self.db_location)
+
+    def set_tags(self):
+
+        self.db_tags = []
+        self.db_tags.append(self.db_date_taken.strftime("%B"))
+        self.db_tags.append(self.db_date_taken.strftime("%Y"))
+        self.db_tags.append(self.db_date_taken.strftime("%A"))
+        self.db_tags.append(self.db_model)
+        self.db_tags.append(self.db_make)
+
+        if self.db_country:
+            self.db_tags.append(self.db_country)
+
+        if self.db_state:
+            self.db_tags.append(self.db_state)
+
+
+
+
+        if self.db_date_taken.hour >= 5 and self.db_date_taken.hour < 12:
+            self.db_tags.append("Morning")
+        if self.db_date_taken.hour >= 12 and self.db_date_taken.hour < 17:
+            self.db_tags.append("Afternoon")
+        if self.db_date_taken.hour >= 17 and self.db_date_taken.hour < 23:
+            self.db_tags.append("Evening")
+        if self.db_date_taken.hour >= 23 and self.db_date_taken.hour < 5:
+            self.db_tags.append("Night")
+
+
+
+
+        if self.db_size <= 1024000:
+            self.db_tags.append("Small file")
+        if self.db_size > 1024000 and self.db_size < 3600000:
+            self.db_tags.append("Medium file")
+        if self.db_size >= 3600000:
+            self.db_tags.append("Large file")
+
+
+    def add_exif_data(self, exif_field, mongo_field, db_entry=None):
         date_fields = ["DateTimeOriginal", "DateTime"]
 
         if exif_field in self.exif:
@@ -171,8 +256,10 @@ class image(imagebase):
                 date_format = "%Y:%m:%d %H:%M:%S"
                 date = datetime.datetime.strptime(date_string, date_format)
                 setattr(self,mongo_field,date)
+
             else:
                 setattr(self,mongo_field,self.exif[exif_field])
+
             return 1
 
     def __str__(self):

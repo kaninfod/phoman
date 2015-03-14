@@ -1,3 +1,6 @@
+
+
+
 {% extends "layout.html" %}
 {% import 'bootstrapField.html' as field %}
 
@@ -11,6 +14,18 @@
     {{ field.render_field(form.model) }}
     {{ field.render_field(form.dateTaken_gt, "date") }}
     {{ field.render_field(form.dateTaken_lt, "date") }}
-    <p><input type="submit" value="Add Collection"></p>
+
+
+          <div class="bs-example">
+            <input type="text" value="Amsterdam,Washington,Sydney,Beijing,Cairo" data-role="tagsinput" />
+          </div>
+<p><input type="submit" value="Add Collection"></p>
 </form>
+
+
+<div id="the-basics">
+  <input class="typeahead" type="text" placeholder="States of USA">
+</div>
+
+
 {% endblock %}
