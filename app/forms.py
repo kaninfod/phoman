@@ -4,12 +4,13 @@ from app.model.common import get_keywords
 
 
 class newCollectionForm(Form):
-    collectionName = StringField('Collection Name',  [validators.InputRequired()])
+    collectionName = StringField('Collection Name', [validators.InputRequired()])
 
     make = StringField('Make')
     model = StringField('Model')
     dateTaken_gt = DateField("Taken on or after", [validators.optional()])
     dateTaken_lt = DateField("Taken before", [validators.optional()])
+
 
 class new_album(Form):
     id = HiddenField()

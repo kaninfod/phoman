@@ -1,6 +1,5 @@
 from flask import render_template
 
-
 from app import app
 from app import collectionsDB
 from app import albumsDB
@@ -8,28 +7,22 @@ import os
 from app.model import *
 from app.model.imageCollection import imageCollection
 
-from app.model.album import album
-from app.model.image import image, image_query
+from app.model.album import Album
+from app.model.image import image, ImageQuery
 import datetime
 import calendar
 from .forms import newCollectionForm, new_album
 from flask import request, flash, redirect, url_for, send_file, jsonify
 
 
-
-
 @app.route('/')
 def home():
-
     return render_template('home.html')
-
-
 
 
 @app.route('/image/store/image/<image_id>/size/<size>')
 def imagestore(image_id, size):
-
-    im = image(id=image_id)
+    im = image(image_id=image_id)
     if im:
         if size == "tm":
             path = im.db_thumb_path
@@ -38,33 +31,30 @@ def imagestore(image_id, size):
         elif size == "lg":
             path = im.db_large_path
 
-
-
     return send_file(path)
+
 
 @app.route('/image/large/id/<id>')
 def showlarge(id):
-    im = image(id=id)
-    return render_template('showlarge.html', back_url=request.referrer,img=im)
+    im = image(image_id=id)
+    return render_template('showlarge.html', back_url=request.referrer, img=im)
 
 
-@app.route('/image/album/<album_id>',  defaults={'page':1})
+@app.route('/image/album/<album_id>', defaults={'page': 1})
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
-
     perPage = 20
 
-    data = album(album_id)
+    data = Album(album_id)
     pagination = common.pagination(page, perPage, data.imagecount)
     data = data[pagination.min_rec:pagination.max_rec]
 
     return render_template('images.html', data=data, paginator=pagination)
 
 
-@app.route('/album/list',  defaults={'page':1})
+@app.route('/album/list', defaults={'page': 1})
 @app.route('/album/list/page/<int:page>')
 def collection(page):
-
     perPage = 10
     data = albumsDB.find()
     pagination = common.pagination(page, perPage, data.count())
@@ -73,17 +63,15 @@ def collection(page):
     return render_template('album_list.html', data=data, paginator=pagination)
 
 
-
-@app.route('/album/add', defaults={'id':None},  methods=['GET', 'POST'])
-@app.route('/album/edit/<id>',  methods=['GET', 'POST'])
+@app.route('/album/add', defaults={'id': None}, methods=['GET', 'POST'])
+@app.route('/album/edit/<id>', methods=['GET', 'POST'])
 def add_album(id):
-
-    form = new_album(request.form, album(id))
+    form = new_album(request.form, Album(id))
 
     if request.method == "POST":
 
         if form.validate():
-            alb = album()
+            alb = Album()
             alb.id = form.id.data
             alb.name = form.name.data
             alb.tags_include = form.tags_include.data
@@ -92,9 +80,7 @@ def add_album(id):
 
             return redirect('/album/list')
 
-
     return render_template('album_add.html', title="Add new collection", form=form)
-
 
 
 @app.route('/updateimagecounts')
@@ -103,33 +89,27 @@ def updateimagecounts():
     return redirect('/collections')
 
 
-
-
 @app.route('/addCol')
 def addCol():
-
-
-
-    for i in range(1,12):
+    for i in range(1, 12):
         col = imageCollection()
         col.name = "2014-%s" % i
         date = datetime.date(2014, i, 1)
         col.query.gt_date(date)
-        m = calendar.monthrange(2014,i)
+        m = calendar.monthrange(2014, i)
         col.query.lt_date(datetime.date(2014, i, m[1]))
         col._save()
 
-    for i in range(1,4):
+    for i in range(1, 4):
         col = imageCollection()
         col.name = "2015-%s" % i
         date = datetime.date(2015, i, 1)
         col.query.gt_date(date)
-        m = calendar.monthrange(2015,i)
+        m = calendar.monthrange(2015, i)
         col.query.lt_date(datetime.date(2015, i, m[1]))
         col._save()
 
     return redirect('/collections')
-
 
 
 @app.route('/_add_numbers')
@@ -144,18 +124,10 @@ def index():
     return render_template('test.html')
 
 
-
-
-
-
-@app.route('/addcollection/id/<id>',  methods=['GET', 'POST'])
+@app.route('/addcollection/id/<id>', methods=['GET', 'POST'])
 def addCollection():
-
-
-
     form = newCollectionForm()
     if request.method == "POST" and form.validate():
-
         col = imageCollection()
         col.query.db_make = form.make.data
         col.query.db_model = form.model.data
@@ -168,36 +140,24 @@ def addCollection():
     return render_template('addCollection.html', title="Add new collection", form=form)
 
 
-
-
 @app.route('/sync')
 def sync():
-
-    alb = album()
+    alb = Album()
     alb.name = "my album"
     alb.tags_include = ["LGE"]
     alb.tags_exclude = ["Sunday"]
     alb._get_images()
     alb.save()
 
-
     return render_template('home.html')
-
-
-
-
-
-
-
-
-
-
 
 
 def url_for_other_page(page):
     args = request.view_args.copy()
     args['page'] = page
     return url_for(request.endpoint, **args)
+
+
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 

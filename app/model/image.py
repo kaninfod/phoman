@@ -11,7 +11,7 @@ from app import *
 from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
 
 
-class imagebase():
+class ImageBase():
     db_filename = None
     db_original_path = None
     db_large_path = None
@@ -49,9 +49,9 @@ class imagebase():
             if not field == "db_id":
                 imgobject[field] = getattr(self, field)
 
-        im_id = imagesDB.update({"date_taken": self.db_date_taken}, {"$set": imgobject}, upsert=True)
+        imagesDB.update({"date_taken": self.db_date_taken}, {"$set": imgobject}, upsert=True)
         self.db_id = str(imagesDB.find(imgobject)[0]["_id"])
-        print()
+
 
     def __mongo_populate__(self, record):
 
@@ -62,7 +62,7 @@ class imagebase():
                 setattr(self, field, record[field])
 
 
-class image_query(imagebase):
+class ImageQuery(ImageBase):
     def __init__(self):
         self._query = {}
         self.date_taken_gte = ""
@@ -96,7 +96,8 @@ class image_query(imagebase):
             self._query[name] = value
         object.__setattr__(self, name, value)
 
-    def _date_to_datetime(self, date):
+    @staticmethod
+    def _date_to_datetime(date):
         return datetime.datetime.combine(date, datetime.time.min)
 
     @property
@@ -120,22 +121,28 @@ class image_query(imagebase):
         # return json.dumps(self.__dict__, default=json_util.default)
 
 
-class image(imagebase):
+def generate_thumb(image, path, size):
+    if not os.path.isfile(path):
+        thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
+        thumb.save(path, "JPEG")
+
+
+class image(ImageBase):
     THUMB_SIZE = (256, 256)
     MEDIUM_SIZE = (600, 800)
     LARGE_SIZE = (1024, 1200)
 
 
-    def __init__(self, imageSource=None, id=None, update_location=False):
+    def __init__(self, image_source=None, image_id=None, update_location=False):
         self.db_tags = []
 
-        if id:
-            imageSource = imagesDB.find_one({'_id': ObjectId(id)})
+        if image_id:
+            image_source = imagesDB.find_one({'_id': ObjectId(image_id)})
 
-        if isinstance(imageSource, str):
-            self._image_from_file(imageSource)
+        if isinstance(image_source, str):
+            self._image_from_file(image_source)
         else:
-            self.__mongo_populate__(imageSource)
+            self.__mongo_populate__(image_source)
             if update_location:
                 lookup_location(self)
 
@@ -145,7 +152,7 @@ class image(imagebase):
         image = Image.open(file, 'r')
         self.exif = get_exif_data(image)
 
-        if self.exif == None:
+        if self.exif is None:
             self.db_has_exif = False
             self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
         else:
@@ -221,24 +228,24 @@ class image(imagebase):
         if self.db_state:
             self.db_tags.append(self.db_state)
 
-        if self.db_date_taken.hour >= 5 and self.db_date_taken.hour < 12:
+        if 5 <= self.db_date_taken.hour < 12:
             self.db_tags.append("Morning")
-        if self.db_date_taken.hour >= 12 and self.db_date_taken.hour < 17:
+        if 12 <= self.db_date_taken.hour < 17:
             self.db_tags.append("Afternoon")
-        if self.db_date_taken.hour >= 17 and self.db_date_taken.hour < 23:
+        if 17 <= self.db_date_taken.hour < 23:
             self.db_tags.append("Evening")
-        if self.db_date_taken.hour >= 23 and self.db_date_taken.hour < 5:
+        if 23 <= self.db_date_taken.hour < 5:
             self.db_tags.append("Night")
 
         if self.db_size <= 1024000:
             self.db_tags.append("Small file")
-        if self.db_size > 1024000 and self.db_size < 3600000:
+        if 1024000 < self.db_size < 3600000:
             self.db_tags.append("Medium file")
         if self.db_size >= 3600000:
             self.db_tags.append("Large file")
 
 
-    def add_exif_data(self, exif_field, mongo_field, db_entry=None):
+    def add_exif_data(self, exif_field, mongo_field):
         date_fields = ["DateTimeOriginal", "DateTime"]
 
         if exif_field in self.exif:
@@ -254,7 +261,7 @@ class image(imagebase):
             return 1
 
     def __str__(self):
-        return self.path
+        return self.db_original_path
 
     def _generate_files(self, file):
         self.db_original_path = file
@@ -273,7 +280,7 @@ class image(imagebase):
 
         im = Image.open(self.db_original_path)
         self.generate_image(im, self.db_medium_path, self.MEDIUM_SIZE)
-        self.generate_thumb(im, self.db_thumb_path, self.THUMB_SIZE)
+        generate_thumb(im, self.db_thumb_path, self.THUMB_SIZE)
 
     def generate_image(self, image, path, size):
 
@@ -281,12 +288,6 @@ class image(imagebase):
             image.thumbnail(size, Image.ANTIALIAS)
             image.save(path, "JPEG")
 
-
-    def generate_thumb(self, image, path, size):
-
-        if not os.path.isfile(path):
-            thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
-            thumb.save(path, "JPEG")
 
     def _ensure_dir(self, dirname):
         """

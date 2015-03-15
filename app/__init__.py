@@ -7,7 +7,7 @@ import logging
 app = Flask(__name__)
 app.secret_key = 'ldjnfieveioecoecococeockeock'
 
-#Mac
+# Mac
 #app.config['IMAGE_STORE'] = "/Users/hingem/my_image_store/"
 #app.config["IMAGE_THUMBS"] = "/Users/hingem/thumbs/"
 #app.config["LOOKUP_LOCATION"] = True
@@ -24,8 +24,6 @@ albumsDB = db['albums']
 
 app.config['DEBUG'] = True
 
-
-
 filehandler = logging.FileHandler('phoman.log')
 filehandler.setLevel(logging.DEBUG)
 # create console handler with a higher log level
@@ -38,14 +36,6 @@ consolehandler.setFormatter(formatter)
 # add the handlers to the logger
 app.logger.addHandler(filehandler)
 app.logger.addHandler(consolehandler)
-
-
-
-
-
-
-
-
 
 from app import views, model
 

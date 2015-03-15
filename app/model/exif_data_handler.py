@@ -1,10 +1,10 @@
 __author__ = 'hingem'
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
-from geopy.geocoders import GoogleV3, GeoNames
-import logging
 from PIL.ExifTags import TAGS, GPSTAGS
+
 from app import *
+
 
 def get_exif_data(image):
     """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
@@ -28,6 +28,7 @@ def get_exif_data(image):
 
     return exif_data
 
+
 def _convert_to_degress(value):
     """Helper function to convert the GPS coordinates stored in the EXIF to degress in float format"""
     deg_num, deg_denom = value[0]
@@ -40,6 +41,7 @@ def _convert_to_degress(value):
     s = float(sec_num) / float(sec_denom)
 
     return d + (m / 60.0) + (s / 3600.0)
+
 
 def get_lat_lon(exif_data):
     """Returns the latitude and longitude, if available, from the provided exif_data (obtained through get_exif_data above)"""
@@ -65,15 +67,13 @@ def get_lat_lon(exif_data):
 
     return lat, lon
 
+
 def lookup_location(image):
-
-
-    #app.logger.name = "lookup location"
+    # app.logger.name = "lookup location"
     if not image.db_location and image.db_latitude and image.db_longitude:
 
         #geolocator = GoogleV3("AIzaSyCGSMJfmJI91d8S6q-LK-rSXO-HpJdZjQQ")
         geolocator = Nominatim(timeout=4)
-
 
         point = "%s,%s" % (image.db_latitude, image.db_longitude)
         app.logger.debug("Looking up %s" % image.db_id)
@@ -97,7 +97,6 @@ def lookup_location(image):
                     if "road" in location.raw["address"]:
                         image.db_road = location.raw["address"]['road']
                         app.logger.debug("success getting road")
-
 
                     image.db_address = location.raw['display_name']
 
