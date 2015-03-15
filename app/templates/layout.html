@@ -13,43 +13,75 @@
     <script src="/static/js/custom.js"></script>
     <script type=text/javascript>
       $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
     </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 </head>
 <body>
-<div class="page-header">
-    <h1>Example page header
-        <small>Subtext for header</small>
-    </h1>
-</div>
-<div class="row">
-    <div class="col-sm-3">
-        <div class="well bs-sidebar affix" id="sidebar">
-            <ul class="nav nav-pills nav-stacked">
-                <li class="list-group-item"><a href="/collections">Collections</a></li>
-                <li class="list-group-item"><a href="/addcollection">Add collection</a></li>
-                <li class="list-group-item"><a href="/sync">Scan</a></li>
-                <li class="list-group-item"><a href="/updateimagecounts">Update Imagecounts</a></li>
-                <li class="list-group-item"><a href="/addCol">add stadard col</a></li>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <nav class="navbar navbar-default">
+                <div class="container-fluid">
+                    <!-- Brand and toggle get grouped for better mobile display -->
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                                data-target="#bs-example-navbar-collapse-1">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="#">PhoMan</a>
+                    </div>
 
-            </ul>
-        </div>
-        <!--well bs-sidebar affix-->
-    </div>
-    <!--col-sm-3-->
-    <div class="col-sm-9">
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-success" role="alert">
+                    <!-- Collect the nav links, forms, and other content for toggling -->
+                    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                        <ul class="nav navbar-nav">
+                            <li class="active"><a href="/album/list">Albums <span class="sr-only">(current)</span></a></li>
+                            <li><a href="#">Link</a></li>
+                        </ul>
 
-                    {% for message in messages %}
-                    {{ message }}
-                    {% endfor %}
-
+                        <ul class="nav navbar-nav navbar-right">
+                            <li><a href="#">Link</a></li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                                   aria-expanded="false">Dropdown <span class="caret"></span></a>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="#">Action</a></li>
+                                    <li><a href="#">Another action</a></li>
+                                    <li><a href="#">Something else here</a></li>
+                                    <li class="divider"></li>
+                                    <li><a href="#">Separated link</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- /.navbar-collapse -->
                 </div>
-            {% endif %}
+                <!-- /.container-fluid -->
+            </nav>
+
+
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <div class="col-lg-12">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-success" role="alert">
+
+            {% for message in messages %}
+            {{ message }}
+            {% endfor %}
+
+        </div>
+        {% endif %}
         {% endwith %}
         {% block content %}
 
@@ -58,9 +90,8 @@
 
 
     </div>
-    <!--col-sm-9-->
+
 </div>
-<!--row-->
 
 
 </body>
