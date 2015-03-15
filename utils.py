@@ -16,9 +16,8 @@ def do_loop():
             if os.path.splitext(filename)[1] == ".jpg":
                 fn = root + "/" + filename
                 logging.info('indexing image file: %s' % filename)
-
                 img = image(fn)
-                logging.info('indexed: %s with exif:%s' % (filename, img.db_has_exif))
+                logging.info('indexed: %s with exif:%s, and id: %s' % (filename, img.db_has_exif, img.db_id))
 
 if __name__ == "__main__":
 

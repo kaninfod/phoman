@@ -4,7 +4,7 @@ import os
 from app import *
 
 from app.model.imageCollection import imageCollection, image
-from app import collectionsDB
+from app import collectionsDB, albumsDB
 from math import ceil
 
 def do_loop(loop):
@@ -33,6 +33,14 @@ def getCollections():
 
 
     return collectionsDB.find()
+
+def get_keywords():
+    keywords = imagesDB.distinct('db_tags')
+    index = list(range(0, len(keywords)))
+    #k = [zip(keywords, keywords)]
+    k = [([x,y]) for x,y in zip(keywords, keywords)]
+    #k =[('132', '23'),('54','234'),('987','76')]
+    return k
 
 
 class pagination(object):

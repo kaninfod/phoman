@@ -1,14 +1,14 @@
-import os, errno
-from bson.objectid import ObjectId
-from PIL import Image, ImageOps
-
-from app import *
-from bson import json_util
+import os
+import errno
 import json
 import datetime
 
-from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
+from bson.objectid import ObjectId
+from PIL import Image, ImageOps
+from bson import json_util
 
+from app import *
+from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
 
 
 class imagebase():
@@ -38,32 +38,31 @@ class imagebase():
     db_road = None
 
 
-
     def __mongo_attributes__(self):
 
-        return [i for i in dir(self)  if i.startswith('db_')]
+        return [i for i in dir(self) if i.startswith('db_')]
 
     def __mongo_save__(self):
         imgobject = {}
 
         for field in self.__mongo_attributes__():
             if not field == "db_id":
-                imgobject[field] = getattr(self,field)
+                imgobject[field] = getattr(self, field)
 
-        im_id = imagesDB.update({"date_taken":self.db_date_taken}, {"$set":imgobject}, upsert=True)
-
+        im_id = imagesDB.update({"date_taken": self.db_date_taken}, {"$set": imgobject}, upsert=True)
+        self.db_id = str(imagesDB.find(imgobject)[0]["_id"])
+        print()
 
     def __mongo_populate__(self, record):
 
         for field in record:
             if field == "_id":
-                setattr(self,"db_id",str(record["_id"]))
+                setattr(self, "db_id", str(record["_id"]))
             elif "db_" in field:
-                setattr(self,field,record[field])
+                setattr(self, field, record[field])
 
 
 class image_query(imagebase):
-
     def __init__(self):
         self._query = {}
         self.date_taken_gte = ""
@@ -74,9 +73,9 @@ class image_query(imagebase):
             date = self._date_to_datetime(date)
 
         if date_field in self._query:
-            self._query[date_field].update({"$gte":date})
+            self._query[date_field].update({"$gte": date})
         else:
-            self._query[date_field] = {"$gte":date}
+            self._query[date_field] = {"$gte": date}
 
         self.date_taken_gte = date
 
@@ -85,9 +84,9 @@ class image_query(imagebase):
             date = self._date_to_datetime(date)
 
         if date_field in self._query:
-            self._query[date_field].update({"$lt":date})
+            self._query[date_field].update({"$lt": date})
         else:
-            self._query[date_field] = {"$lt":date}
+            self._query[date_field] = {"$lt": date}
 
         self.date_taken_lt = date
 
@@ -115,44 +114,44 @@ class image_query(imagebase):
     def serialize(self):
         t = self.__dict__.copy()
         t.pop("_query")
-        t.update( {"query":self.query} )
+        t.update({"query": self.query})
 
         return t
-        #return json.dumps(self.__dict__, default=json_util.default)
+        # return json.dumps(self.__dict__, default=json_util.default)
 
 
 class image(imagebase):
-    THUMB_SIZE = (256,256)
-    MEDIUM_SIZE = (600,800)
-    LARGE_SIZE = (1024,1200)
+    THUMB_SIZE = (256, 256)
+    MEDIUM_SIZE = (600, 800)
+    LARGE_SIZE = (1024, 1200)
 
 
     def __init__(self, imageSource=None, id=None, update_location=False):
         self.db_tags = []
 
         if id:
-            imageSource = imagesDB.find_one({'_id':ObjectId(id)})
+            imageSource = imagesDB.find_one({'_id': ObjectId(id)})
 
         if isinstance(imageSource, str):
             self._image_from_file(imageSource)
         else:
             self.__mongo_populate__(imageSource)
             if update_location:
-                self.add_location_data()
+                lookup_location(self)
 
 
     def _image_from_file(self, file):
 
-        image=Image.open(file,'r')
+        image = Image.open(file, 'r')
         self.exif = get_exif_data(image)
 
         if self.exif == None:
             self.db_has_exif = False
-            self.db_date_taken = datetime.datetime(1972,6,24,0)
+            self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
         else:
 
             if "ImageUniqueID" in self.exif:
-                db_entry = imagesDB.find_one({'db_ImageUniqueID':self.exif['ImageUniqueID']})
+                db_entry = imagesDB.find_one({'db_ImageUniqueID': self.exif['ImageUniqueID']})
                 if db_entry:
                     self.db_country = db_entry["db_country"]
                     self.db_state = db_entry["db_state"]
@@ -160,11 +159,9 @@ class image(imagebase):
                     self.db_address = db_entry["db_address"]
                     self.db_location = db_entry["db_location"]
 
-
-
             if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
                 if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
-                    self.db_date_taken = datetime.datetime(1972,6,24,0)
+                    self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
 
             self.db_has_exif = True
             self.add_exif_data("Make", "db_make")
@@ -224,9 +221,6 @@ class image(imagebase):
         if self.db_state:
             self.db_tags.append(self.db_state)
 
-
-
-
         if self.db_date_taken.hour >= 5 and self.db_date_taken.hour < 12:
             self.db_tags.append("Morning")
         if self.db_date_taken.hour >= 12 and self.db_date_taken.hour < 17:
@@ -235,9 +229,6 @@ class image(imagebase):
             self.db_tags.append("Evening")
         if self.db_date_taken.hour >= 23 and self.db_date_taken.hour < 5:
             self.db_tags.append("Night")
-
-
-
 
         if self.db_size <= 1024000:
             self.db_tags.append("Small file")
@@ -255,10 +246,10 @@ class image(imagebase):
                 date_string = str(self.exif[exif_field])
                 date_format = "%Y:%m:%d %H:%M:%S"
                 date = datetime.datetime.strptime(date_string, date_format)
-                setattr(self,mongo_field,date)
+                setattr(self, mongo_field, date)
 
             else:
-                setattr(self,mongo_field,self.exif[exif_field])
+                setattr(self, mongo_field, self.exif[exif_field])
 
             return 1
 
@@ -282,7 +273,7 @@ class image(imagebase):
 
         im = Image.open(self.db_original_path)
         self.generate_image(im, self.db_medium_path, self.MEDIUM_SIZE)
-        self.generate_thumb(im, self.db_thumb_path,self.THUMB_SIZE)
+        self.generate_thumb(im, self.db_thumb_path, self.THUMB_SIZE)
 
     def generate_image(self, image, path, size):
 
@@ -297,7 +288,7 @@ class image(imagebase):
             thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
             thumb.save(path, "JPEG")
 
-    def _ensure_dir(self,dirname):
+    def _ensure_dir(self, dirname):
         """
         Ensure that a named directory exists; if it does not, attempt to create it.
         """

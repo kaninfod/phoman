@@ -3,36 +3,33 @@ from flask import render_template
 
 from app import app
 from app import collectionsDB
+from app import albumsDB
 import os
 from app.model import *
 from app.model.imageCollection import imageCollection
+
 from app.model.album import album
 from app.model.image import image, image_query
 import datetime
 import calendar
-from .forms import newCollectionForm
+from .forms import newCollectionForm, new_album
 from flask import request, flash, redirect, url_for, send_file, jsonify
 
 
 
-@app.route('/sync')
-def sync():
 
-    alb = album()
-    alb.name = "my album"
-    alb.tags_include = ["LGE"]
-    alb.tags_exclude = ["Sunday"]
-    alb._get_images()
-    alb.save()
-
+@app.route('/')
+def home():
 
     return render_template('home.html')
 
 
-@app.route('/imagestore/id/<id>/size/<size>')
-def imagestore(id, size):
 
-    im = image(id=id)
+
+@app.route('/image/store/image/<image_id>/size/<size>')
+def imagestore(image_id, size):
+
+    im = image(id=image_id)
     if im:
         if size == "tm":
             path = im.db_thumb_path
@@ -42,59 +39,62 @@ def imagestore(id, size):
             path = im.db_large_path
 
 
-    #if not os.path.isfile(path):
-    #    return url_for('static', filename='img/img_not_found.jpg')
 
     return send_file(path)
 
-@app.route('/showlarge/id/<id>')
+@app.route('/image/large/id/<id>')
 def showlarge(id):
     im = image(id=id)
     return render_template('showlarge.html', back_url=request.referrer,img=im)
 
 
-@app.route('/images/id/<id>',  defaults={'page':1})
-@app.route('/images/id/<id>/page/<int:page>')
-def images(id, page):
+@app.route('/image/album/<album_id>',  defaults={'page':1})
+@app.route('/image/album/<album_id>/page/<int:page>')
+def images(album_id, page):
 
     perPage = 20
 
-    data = imageCollection(id)
+    data = album(album_id)
     pagination = common.pagination(page, perPage, data.imagecount)
     data = data[pagination.min_rec:pagination.max_rec]
-
-
 
     return render_template('images.html', data=data, paginator=pagination)
 
 
-@app.route('/collections',  defaults={'page':1})
-@app.route('/collections/page/<int:page>')
+@app.route('/album/list',  defaults={'page':1})
+@app.route('/album/list/page/<int:page>')
 def collection(page):
 
-    perPage = 9
-    data = collectionsDB.find()
+    perPage = 10
+    data = albumsDB.find()
     pagination = common.pagination(page, perPage, data.count())
     data = data[pagination.min_rec:pagination.max_rec]
 
-    return render_template('collections.html', data=data, paginator=pagination)
+    return render_template('album_list.html', data=data, paginator=pagination)
 
-@app.route('/addcollection',  methods=['GET', 'POST'])
-def addCollection():
 
-    form = newCollectionForm(   )
-    if request.method == "POST" and form.validate():
 
-        col = imageCollection()
-        col.query.db_make = form.make.data
-        col.query.db_model = form.model.data
-        col.name = form.collectionName.data
-        col.query.date_taken_gte = form.dateTaken_gt.data
-        col.query.date_taken_lt = form.dateTaken_lt.data
-        col._save()
-        flash(col.imagecount)
-        return redirect('/addcollection')
-    return render_template('addCollection.html', title="Add new collection", form=form)
+@app.route('/album/add', defaults={'id':None},  methods=['GET', 'POST'])
+@app.route('/album/edit/<id>',  methods=['GET', 'POST'])
+def add_album(id):
+
+    form = new_album(request.form, album(id))
+
+    if request.method == "POST":
+
+        if form.validate():
+            alb = album()
+            alb.id = form.id.data
+            alb.name = form.name.data
+            alb.tags_include = form.tags_include.data
+            alb.tags_exclude = form.tags_exclude.data
+            alb.save()
+
+            return redirect('/album/list')
+
+
+    return render_template('album_add.html', title="Add new collection", form=form)
+
 
 
 @app.route('/updateimagecounts')
@@ -103,10 +103,6 @@ def updateimagecounts():
     return redirect('/collections')
 
 
-@app.route('/')
-def home():
-
-    return render_template('home.html')
 
 
 @app.route('/addCol')
@@ -148,8 +144,60 @@ def index():
     return render_template('test.html')
 
 
+
+
+
+
+@app.route('/addcollection/id/<id>',  methods=['GET', 'POST'])
+def addCollection():
+
+
+
+    form = newCollectionForm()
+    if request.method == "POST" and form.validate():
+
+        col = imageCollection()
+        col.query.db_make = form.make.data
+        col.query.db_model = form.model.data
+        col.name = form.collectionName.data
+        col.query.date_taken_gte = form.dateTaken_gt.data
+        col.query.date_taken_lt = form.dateTaken_lt.data
+        col._save()
+        flash(col.imagecount)
+        return redirect('/addcollection')
+    return render_template('addCollection.html', title="Add new collection", form=form)
+
+
+
+
+@app.route('/sync')
+def sync():
+
+    alb = album()
+    alb.name = "my album"
+    alb.tags_include = ["LGE"]
+    alb.tags_exclude = ["Sunday"]
+    alb._get_images()
+    alb.save()
+
+
+    return render_template('home.html')
+
+
+
+
+
+
+
+
+
+
+
+
 def url_for_other_page(page):
     args = request.view_args.copy()
     args['page'] = page
     return url_for(request.endpoint, **args)
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+
+

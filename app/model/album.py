@@ -7,6 +7,7 @@ import json
 
 from app.model.image import image, image_query
 from app import collectionsDB, imagesDB, albumsDB
+from bson.objectid import ObjectId
 
 
 
@@ -48,26 +49,12 @@ class album():
             if self.album:
                 self.id = self.album["_id"]
                 self.name = self.album["name"]
+                self.tags_exclude = self.album["tags_exclude"]
+                self.tags_include = self.album["tags_include"]
 
-                for field in self.album["query"]:
-                    setattr(self.query, field, self.album["query"][field])
 
                 self._get_images()
 
-
-    def _save(self):
-        if self.name and self.query:
-
-            self.album = albumsDB.find_one({"query.query":self.query.query})
-            if self.album:
-                self.id = self.album["_id"]
-                albumsDB.update({"_id":self.id}, {"$set":self._serialize()})
-            else:
-                id = albumsDB.insert(self._serialize())
-                self.id = id
-                self.album = albumsDB.find_one({"_id":self.id})
-
-            self._get_images()
 
     def _get_images(self):
 
@@ -84,7 +71,7 @@ class album():
             self.cursor = imagesDB.find((query_string))
 
             self.imagecount = self.cursor.count()
-            #i = albumsDB.update({"_id":self.id}, {"$set":{"imagecount":self.imagecount}}, upsert=False)
+            i = albumsDB.update({"_id":self.id}, {"$set":{"imagecount":self.imagecount}}, upsert=False)
 
 
     def save(self):
@@ -95,9 +82,18 @@ class album():
             'name':self.name
         }
 
-        self.album = albumsDB.find_one({'name':self.name})
-        if self.album:
-            albumsDB.update(alb)
+        if self.id:
+
+            albumsDB.update({'_id':ObjectId(self.id)}, {"$set":alb})
+
         else:
             self.id = str(albumsDB.insert(alb))
-            print()
+
+
+        #
+        # self.album = albumsDB.find_one({'name':self.name})
+        # if self.album:
+        #     albumsDB.update(alb)
+        # else:
+        #
+        #     print()

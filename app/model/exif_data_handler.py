@@ -2,8 +2,9 @@ __author__ = 'hingem'
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from geopy.geocoders import GoogleV3, GeoNames
-
+import logging
 from PIL.ExifTags import TAGS, GPSTAGS
+from app import *
 
 def get_exif_data(image):
     """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
@@ -64,19 +65,47 @@ def get_lat_lon(exif_data):
 
     return lat, lon
 
-def lookup_location(point):
-    #geolocator = GoogleV3("AIzaSyCGSMJfmJI91d8S6q-LK-rSXO-HpJdZjQQ")
-    geolocator = Nominatim(timeout=4)
+def lookup_location(image):
 
-    try:
-        location = geolocator.reverse(point)
-    except GeocoderTimedOut as e:
-        print(e)
-        return 0
-    except Exception as e:
-        print(e)
 
-    if len(location):
-        return location
+    #app.logger.name = "lookup location"
+    if not image.db_location and image.db_latitude and image.db_longitude:
+
+        #geolocator = GoogleV3("AIzaSyCGSMJfmJI91d8S6q-LK-rSXO-HpJdZjQQ")
+        geolocator = Nominatim(timeout=4)
+
+
+        point = "%s,%s" % (image.db_latitude, image.db_longitude)
+        app.logger.debug("Looking up %s" % image.db_id)
+        try:
+            location = geolocator.reverse(point)
+        except GeocoderTimedOut as e:
+            app.logger.warning(e)
+        except Exception as e:
+            app.logger.warning(e)
+        else:
+            if location:
+                if "error" in location.raw:
+                    app.logger.warning(location.raw["error"])
+                elif "address" in location.raw:
+                    if "country" in location.raw["address"]:
+                        image.db_country = location.raw["address"]['country']
+                        app.logger.debug("success getting country")
+                    if "state" in location.raw["address"]:
+                        image.db_state = location.raw["address"]['state']
+                        app.logger.debug("success getting state")
+                    if "road" in location.raw["address"]:
+                        image.db_road = location.raw["address"]['road']
+                        app.logger.debug("success getting road")
+
+
+                    image.db_address = location.raw['display_name']
+
+                    image.db_location = True
+                    app.logger.info("success getting one or more location entities")
+                else:
+                    app.logger.info("no location returned")
+            else:
+                image.db_location = False
     else:
-        return None
+        app.logger.debug("No coordinates or image already located, id: %s" % image.db_id)
