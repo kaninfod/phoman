@@ -32,6 +32,7 @@ class Album():
         if isinstance(index, int):
             return image(self.cursor[index])
         elif isinstance(index, slice):
+
             lst = list()
             self.cursor.rewind()
             for item in self.cursor[index.start:index.stop]:
@@ -58,14 +59,23 @@ class Album():
             query_string.update(
                 {'db_tags':
                      {
-                         '$all': self.tags_include,
+                         '$all': self.tags_include
+                     }
+                 })
+
+        if self.tags_exclude:
+            query_string.update(
+                {'db_tags':
+                     {
                          '$nin': self.tags_exclude
                      }
                  })
-            self.cursor = imagesDB.find(query_string)
 
-            self.imagecount = self.cursor.count()
-            albumsDB.update({"_id": self.id}, {"$set": {"imagecount": self.imagecount}}, upsert=False)
+
+
+        self.cursor = imagesDB.find(query_string).limit(5)
+        self.imagecount = self.cursor.count()
+        albumsDB.update({"_id": self.id}, {"$set": {"imagecount": self.imagecount}}, upsert=False)
 
 
     def save(self):
@@ -77,12 +87,10 @@ class Album():
         }
 
         if self.id:
-
             albumsDB.update({'_id': ObjectId(self.id)}, {"$set": alb})
-
         else:
             self.id = str(albumsDB.insert(alb))
-
+        self._get_images()
 
             #
             # self.album = albumsDB.find_one({'name':self.name})

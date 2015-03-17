@@ -6,6 +6,7 @@ from app import albumsDB
 import os
 from app.model import *
 from app.model.imageCollection import imageCollection
+from app.model.common import get_keywords
 
 from app.model.album import Album
 from app.model.image import image, ImageQuery
@@ -15,10 +16,10 @@ from .forms import newCollectionForm, new_album
 from flask import request, flash, redirect, url_for, send_file, jsonify
 
 
-@app.route('/')
+@app.route('/home')
 def home():
-    return render_template('home.html')
 
+    return render_template('home.html')
 
 @app.route('/image/store/image/<image_id>/size/<size>')
 def imagestore(image_id, size):
@@ -40,16 +41,29 @@ def showlarge(id):
     return render_template('showlarge.html', back_url=request.referrer, img=im)
 
 
+@app.route('/image/album/new', defaults={'album_id':5, 'page': 1})
 @app.route('/image/album/<album_id>', defaults={'page': 1})
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
-    perPage = 20
 
-    data = Album(album_id)
+    if  album_id == 5:
+        data = Album()
+
+        data.name = '_temp'
+        data.tags_include = []
+        data.tags_exclude = []
+        data.save()
+        ajax = True
+        album_id = data.id
+
+    else:
+        data = Album(album_id)
+        ajax = True
+
+    perPage = 20
     pagination = common.pagination(page, perPage, data.imagecount)
     data = data[pagination.min_rec:pagination.max_rec]
-
-    return render_template('images.html', data=data, paginator=pagination)
+    return render_template('images.html', data=data, paginator=pagination, ajax=ajax, album_id=album_id)
 
 
 @app.route('/album/list', defaults={'page': 1})
@@ -63,24 +77,19 @@ def collection(page):
     return render_template('album_list.html', data=data, paginator=pagination)
 
 
-@app.route('/album/add', defaults={'id': None}, methods=['GET', 'POST'])
-@app.route('/album/edit/<id>', methods=['GET', 'POST'])
+@app.route('/album/new', defaults={'id': None}, methods=['GET', 'POST'])
+@app.route('/album/new/<id>', methods=['GET', 'POST'])
 def add_album(id):
-    form = new_album(request.form, Album(id))
+    if request.method == 'POST':
+        alb = Album()
+        form_data = request.get_json()
+        alb.name = 'test'
+        alb.tags_include = form_data['included']
+        alb.tags_exclude = form_data['excluded']
+        alb.save()
+        album_id = alb.id
 
-    if request.method == "POST":
-
-        if form.validate():
-            alb = Album()
-            alb.id = form.id.data
-            alb.name = form.name.data
-            alb.tags_include = form.tags_include.data
-            alb.tags_exclude = form.tags_exclude.data
-            alb.save()
-
-            return redirect('/album/list')
-
-    return render_template('album_add.html', title="Add new collection", form=form)
+    return render_template('album_add.html', title="Add new collection", album_id=album_id, keywords=get_keywords())
 
 
 @app.route('/updateimagecounts')
