@@ -54,13 +54,10 @@
   float: right;
 }
 </style>
-<script>
-var someJavaScriptVar = '{{ album_id }}';
-</script>
+
 <div class="row">
-    imagecount:{{ data.imagecount }}
   {% for img in data %}
-  <div class="col-xs-6 col-md-3">
+  <div class=" col-md-3">
       <div class="photo-group ">
         <a href="/image/large/id/{{ img.db_id }}" class="photo-wrapper">
             <div class="photo">
