@@ -9,20 +9,8 @@
       background-color: #d43f3a;
     }
 
-    .badge-warning {
-      background-color: #d58512;
-    }
-
     .badge-success {
-      background-color: #398439;
-    }
-
-    .badge-info {
-      background-color: #269abc;
-    }
-
-    .badge-inverse {
-      background-color: #333333;
+      background-color: #6f841a;
     }
 
 	.bs-example{
@@ -40,7 +28,15 @@
             {% for keyword in keywords %}
             <div class="dropdown">
                 <a href="#" data-toggle="dropdown" class="dropdown-toggle">
-                    <span id="{{ keyword[0] }}" class="badge">{{ keyword[0] }}</span> </a>
+                    <span id="{{ keyword[0] }}"
+                        {% if keyword[0] in album.tags_include %}
+                            include  class="badge badge-success"
+                        {% elif  keyword[0] in album.tags_exclude%}
+                            exclude  class="badge badge-danger"
+                        {% else %}
+                            class="badge"
+                        {% endif %}
+                        >{{ keyword[0] }}</span> </a>
                 <ul class="dropdown-menu">
                     <li><a class="include-keyword">Include</a></li>
                     <li><a class="exclude-keyword">Exclude</a></li>
@@ -55,43 +51,39 @@
 
 <script type="text/javascript" language="javascript">
 
-var album_id = '{{ album_id }}';
+var album_id = "{{ album_id }}";
 
 $(document).ready(function() {
 
-    if (typeof album_id !== 'undefined') {
-        alert(album_id);
-    }
 
+  submit_query();
 
-  submit_query()
+$(".include-keyword").click(function() {
 
-  $(".include-keyword").click(function() {
+    parent_div = $(this).closest("div");
 
-    parent_div = $(this).closest("div")
+    badge = parent_div.find("a > span");
+    badge.removeClass("badge-danger");
+    badge.addClass("badge-success");
+    badge.attr("include",'');
 
-    badge = parent_div.find("a > span")
-    badge.removeClass("badge-danger")
-    badge.addClass("badge-success")
-    badge.attr("include",'')
-
-    include_menu = parent_div.find("ul > li > a").attr("id")
+    include_menu = parent_div.find("ul > li > a").attr("id");
 
     if (typeof album_id !== 'undefined') {
         submit_query()
     }
 
-  });
+});
 
 $(".exclude-keyword").click(function() {
-    parent_div = $(this).closest("div")
+    parent_div = $(this).closest("div");
 
-    badge = parent_div.find("a > span")
-    badge.removeClass("badge-success")
-    badge.addClass("badge-danger")
-    badge.attr("exclude",'')
+    badge = parent_div.find("a > span");
+    badge.removeClass("badge-success");
+    badge.addClass("badge-danger");
+    badge.attr("exclude",'');
 
-    include_menu = parent_div.find("ul > li > a").attr("id")
+    include_menu = parent_div.find("ul > li > a").attr("id");
 
     if (typeof album_id !== 'undefined') {
         submit_query()
@@ -101,51 +93,63 @@ $(".exclude-keyword").click(function() {
 
 function submit_query() {
 
-    outer_div = $(".bs-example")
+    outer_div = $(".bs-example");
 
-    var excluded = []
+    var excluded = [];
     outer_div.find('[exclude]').each(function(i) {
         excluded.push( $(this).attr("id") );
     });
 
-    var included = []
+    var included = [];
     outer_div.find('[include]').each(function(i) {
         included.push( $(this).attr("id") );
     });
-    post_data = {'included':included, 'excluded':excluded}
 
-    console.log(post_data);
+    post_data = {'included':included, 'excluded':excluded};
 
-    $.ajax({
-        type: 'POST',
-        contentType: 'application/json',
-        url: '/album/new',
-        data: JSON.stringify(post_data),
-        dataType: 'json',
-        success: get_images
-    })
 
-}
-
-function get_images() {
-
-    if (typeof album_id !== 'undefined') {
-        submit_query()
+    function url() {
+        if (album_id !== 'None') {
+            return "/album/new/" + album_id
+        } else {
+            return "/album/new"
+        }
     }
 
+
+    var request = $.ajax({
+        type: 'POST',
+        contentType: 'application/json',
+        url: url(),
+        data: JSON.stringify(post_data),
+        dataType: 'json'
+
+    });
+
+
+    request.done(function( msg ) {
+        album_id =  msg["album_id"];
+        $.ajax({
+            type: 'POST',
+            contentType: 'application/json',
+            url: "/image/album/" + album_id,
+            data: JSON.stringify({"ajax":true}),
+            dataType: 'html'
+        })
+         .done(function( html ) {
+            $( "#image-list" ).html( html );
+         });
+
+    });
+
+
+    request.fail(function( jqXHR, textStatus ) {
+        alert( "Request failed: " + textStatus );
+    });
+
 }
 
-$("#submit").click(function() {
-
-    submit_query();
-
-
-});
-
-
-
-
-});
+})
 
 </script>
 
