@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% import 'bootstrapField.html' as field %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<form action="" method="post" name="addCollection">
+    {{ form.hidden_tag() }}
+
+    {{ field.render_field(form.name) }}
+    {{ form.tags_include }}
+    {{ form.tags_exclude }}
+    {{ form.submit }}
+
+</form>
+{% endblock %}
