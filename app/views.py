@@ -76,6 +76,23 @@ def collection(page):
 @app.route('/album/new/<id>', methods=['GET', 'POST'])
 def add_album(id):
 
+    if id:
+        alb = Album(id)
+
+        form_data = request.get_json()
+
+        alb.tags_include = form_data['included']
+        alb.tags_exclude = form_data['excluded']
+        alb.save()
+
+        album_id = str(alb.id)
+    else:
+        alb = Album()
+        alb.name = '__temp'
+        alb.save()
+        album_id = str(alb.id)
+    return render_template('album_add.html', title="Add new collection", album_id=album_id, keywords=get_keywords(), album=alb)
+
     album_id =None
     if request.method == 'POST':
         if id:

@@ -55,9 +55,6 @@ var album_id = "{{ album_id }}";
 
 $(document).ready(function() {
 
-
-  submit_query();
-
 $(".include-keyword").click(function() {
 
     parent_div = $(this).closest("div");
@@ -69,7 +66,7 @@ $(".include-keyword").click(function() {
 
     include_menu = parent_div.find("ul > li > a").attr("id");
 
-    if (typeof album_id !== 'undefined') {
+    if (album_id !== 'None') {
         submit_query()
     }
 
@@ -85,7 +82,7 @@ $(".exclude-keyword").click(function() {
 
     include_menu = parent_div.find("ul > li > a").attr("id");
 
-    if (typeof album_id !== 'undefined') {
+    if (album_id !== 'None') {
         submit_query()
     }
 
@@ -122,13 +119,25 @@ function submit_query() {
         contentType: 'application/json',
         url: url(),
         data: JSON.stringify(post_data),
-        dataType: 'json'
+        dataType: 'html'
 
     });
 
 
     request.done(function( msg ) {
         album_id =  msg["album_id"];
+        get_images()
+    });
+
+
+    request.fail(function( jqXHR, textStatus ) {
+        alert( "Request failed: " + textStatus );
+    });
+
+}
+
+    function get_images() {
+
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
@@ -139,15 +148,20 @@ function submit_query() {
          .done(function( html ) {
             $( "#image-list" ).html( html );
          });
+    }
 
-    });
 
 
-    request.fail(function( jqXHR, textStatus ) {
-        alert( "Request failed: " + textStatus );
-    });
 
-}
+
+  if (album_id !== 'None') {
+    get_images()
+  } else {
+    alert("no album_id")
+  }
+
+
+
 
 })
 
