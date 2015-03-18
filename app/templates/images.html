@@ -5,7 +5,20 @@
 {% import 'paginator_macro.html' as paginatorx %}
 
 {% block content %}
+
+
+
 <style type="text/css">
+
+
+    .badge-danger {
+      background-color: #d43f3a;
+    }
+
+    .badge-success {
+      background-color: #6f841a;
+    }
+
     .col-xs-6 {
         padding: 0;
     }
@@ -24,60 +37,184 @@
     }
 
 
-.content-header {
-    padding-bottom: 10px;
-}
+    .content-header {
+        padding-bottom: 10px;
+    }
 
-.thumbnail > a > img {
-    display: block;
-    max-width: 100%;
-}
+    .thumbnail > a > img {
+        display: block;
+        max-width: 100%;
+    }
 
-.photo-group .photo-wrapper {
-    position: relative;
+    .photo-group .photo-wrapper {
+        position: relative;
 
-}
+    }
 
-.photo-group .photo-wrapper .photo {
-    position: relative;
-    margin: 0 auto;
-    display: table;
-}
+    .photo-group .photo-wrapper .photo {
+        position: relative;
+        margin: 0 auto;
+        display: table;
+    }
 
-.photo-group .photo-wrapper .photo-label {
-  position: absolute;
-  bottom: 5px;
-    right: 5px;
-}
+    .photo-group .photo-wrapper .photo-label {
+      position: absolute;
+      bottom: 5px;
+        right: 5px;
+    }
 
-.photo-group .photo-wrapper .photo-label {
-  float: right;
-}
+    .photo-group .photo-wrapper .photo-label {
+      float: right;
+    }
 </style>
-
-<div class="row">
-  {% for img in data %}
-  <div class=" col-md-3">
-      <div class="photo-group ">
-        <a href="/image/large/id/{{ img.db_id }}" class="photo-wrapper">
-            <div class="photo">
-                <img alt="" src="/image/store/image/{{ img.db_id }}/size/tm" class="img-responsive img-thumbnail"/>
-                <span class="label label-inverse photo-label">{{ img.db_date_taken }}</span>
-            </div>
-        </a>
-
+<div class="col-lg-3">
+{{ album.imagecount }} / {{ album.id }} {{ paginator.max_rec }}
+    <div class="bs-example">
+        {% for keyword in keywords %}
+        <div class="dropdown">
+            <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+                <span id="{{ keyword[0] }}"
+                    {% if keyword[0] in album.tags_include %}
+                        include  class="badge badge-success"
+                    {% elif  keyword[0] in album.tags_exclude%}
+                        exclude  class="badge badge-danger"
+                    {% else %}
+                        class="badge"
+                    {% endif %}
+                    >{{ keyword[0] }}</span> </a>
+            <ul class="dropdown-menu">
+                <li><a class="include-keyword">Include</a></li>
+                <li><a class="exclude-keyword">Exclude</a></li>
+            </ul>
+        </div>
+        {% endfor %}
+        <input id="submit" class="btn btn-default" type="submit" value="Submit">
     </div>
-
-
-
-
-
-
-
-  </div>
-  {% endfor %}
 </div>
 
+
+<div id="image-list" class="col-lg-9">
+
+    <div class="row">
+        <div class="row">
+            {% for img in data %}
+                <div class=" col-md-3">
+                    <div class="photo-group ">
+                        <a href="/image/large/id/{{ img.db_id }}" class="photo-wrapper">
+                            <div class="photo">
+                                <img alt="" src="/image/store/image/{{ img.db_id }}/size/tm" class="img-responsive img-thumbnail"/>
+                                <span class="label label-inverse photo-label">{{ img.db_date_taken }}</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
 {{ paginatorx.render_pagination(paginator) }}
+
+
+
+
+<script type="text/javascript" language="javascript">
+
+var album_id = "{{ album.id }}";
+
+$(document).ready(function() {
+
+$(".include-keyword").click(function() {
+
+    parent_div = $(this).closest("div");
+
+    badge = parent_div.find("a > span");
+    if (badge.is("[include]")) {
+        badge.removeAttr("include");
+        badge.removeClass("badge-danger");
+        badge.removeClass("badge-success");
+    } else {
+        badge.attr("include",'');
+        badge.removeAttr("exclude",'');
+        badge.removeClass("badge-danger");
+        badge.addClass("badge-success");
+    }
+
+
+
+    include_menu = parent_div.find("ul > li > a").attr("id");
+
+    if (album_id !== 'None') {
+        submit_query()
+    }
+
+});
+
+$(".exclude-keyword").click(function() {
+    parent_div = $(this).closest("div");
+
+    badge = parent_div.find("a > span");
+    if (badge.is("[exclude]")) {
+        badge.removeAttr("exclude");
+        badge.removeClass("badge-danger");
+        badge.removeClass("badge-success");
+    } else {
+        badge.attr("exclude",'');
+        badge.removeAttr("include",'');
+        badge.addClass("badge-danger");
+        badge.removeClass("badge-success");
+    }
+
+    include_menu = parent_div.find("ul > li > a").attr("id");
+
+    if (album_id !== 'None') {
+        submit_query()
+    }
+
+  });
+
+function submit_query() {
+
+    outer_div = $(".bs-example");
+
+    var excluded = [];
+    outer_div.find('[exclude]').each(function(i) {
+        excluded.push( $(this).attr("id") );
+    });
+
+    var included = [];
+    outer_div.find('[include]').each(function(i) {
+        included.push( $(this).attr("id") );
+    });
+
+    post_data = {'included':included, 'excluded':excluded};
+
+
+    function url() {
+        if (album_id !== 'None') {
+            return "/image/album/" + album_id + "?ajax=1"
+        } else {
+            return "/album/new"
+        }
+    }
+
+
+    var request = $.ajax({
+        type: 'POST',
+        contentType: 'application/json',
+        url: url(),
+        data: JSON.stringify(post_data),
+        dataType: 'json'
+
+    })
+    .done(function( html ) {
+        window.location = "/image/album/" + album_id
+    })
+}
+
+})
+
+</script>
 
 {% endblock %}

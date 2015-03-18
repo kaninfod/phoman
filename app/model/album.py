@@ -53,24 +53,34 @@ class Album():
 
     def _get_images(self):
 
+
+
+
+
+
+        #
+        # if self.tags_include:
+        #     query_string.update(
+        #         {'db_tags':
+        #              {
+        #                  '$all': self.tags_include
+        #              }
+        #          })
+        #
+        # if self.tags_exclude:
+        #     query_string.update(
+        #         {'db_tags':
+        #              {
+        #                  '$nin': self.tags_exclude
+        #              }
+        #          })
         query_string = {}
-
-        if self.tags_include:
-            query_string.update(
-                {'db_tags':
-                     {
-                         '$all': self.tags_include
-                     }
-                 })
-
-        if self.tags_exclude:
-            query_string.update(
-                {'db_tags':
-                     {
-                         '$nin': self.tags_exclude
-                     }
-                 })
-
+        if self.tags_exclude or self.tags_include:
+            query_string.update({
+                '$and':[
+                    {'db_tags':{'$in':self.tags_include}},
+                    {'db_tags':{'$nin':self.tags_exclude}}
+                ]})
 
 
         self.cursor = imagesDB.find(query_string)
@@ -91,11 +101,3 @@ class Album():
         else:
             self.id = str(albumsDB.insert(alb))
         self._get_images()
-
-            #
-            # self.album = albumsDB.find_one({'name':self.name})
-            # if self.album:
-            # albumsDB.update(alb)
-            # else:
-            #
-            # print()

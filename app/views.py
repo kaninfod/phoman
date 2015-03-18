@@ -47,26 +47,29 @@ def showlarge(id):
 def images(album_id, page):
 
     ajax = False
+    alb = Album(album_id)
     if 'ajax' in request.args:
         ajax = True
 
-    data = Album(album_id)
+
+        form_data = request.get_json()
+        if form_data:
+            alb.tags_include = form_data['included']
+            alb.tags_exclude = form_data['excluded']
+            alb.save()
+        return jsonify({'status':'ok'})
 
     perPage = 20
-    pagination = common.pagination(page, perPage, data.imagecount)
-    data = data[pagination.min_rec:pagination.max_rec]
-    return render_template('images.html', data=data, paginator=pagination, ajax=ajax, album_id=album_id)
+    pagination = common.pagination(page, perPage, alb.imagecount)
+    data = alb[pagination.min_rec:pagination.max_rec]
+    return render_template('images.html',
+                           data=data,
+                           paginator=pagination,
+                           ajax=ajax,
+                           album = alb,
+                           keywords=get_keywords())
 
 
-@app.route('/album/list', defaults={'page': 1})
-@app.route('/album/list/page/<int:page>')
-def collection(page):
-    perPage = 10
-    data = albumsDB.find()
-    pagination = common.pagination(page, perPage, data.count())
-    data = data[pagination.min_rec:pagination.max_rec]
-
-    return render_template('album_list.html', data=data, paginator=pagination)
 
 
 @app.route('/album/new', defaults={'id': None}, methods=['GET', 'POST'])
@@ -110,6 +113,17 @@ def add_album(id):
 
 
     return render_template('album_add.html', title="Add new collection", album_id=album_id, keywords=get_keywords(), album=alb)
+
+@app.route('/album/list', defaults={'page': 1})
+@app.route('/album/list/page/<int:page>')
+def collection(page):
+    perPage = 10
+    data = albumsDB.find()
+    pagination = common.pagination(page, perPage, data.count())
+    data = data[pagination.min_rec:pagination.max_rec]
+
+    return render_template('album_list.html', data=data, paginator=pagination)
+
 
 
 @app.route('/updateimagecounts')
