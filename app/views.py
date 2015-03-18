@@ -15,7 +15,7 @@ import calendar
 from .forms import newCollectionForm, new_album
 from flask import request, flash, redirect, url_for, send_file, jsonify
 
-
+@app.route('/')
 @app.route('/home')
 def home():
 
@@ -46,12 +46,9 @@ def showlarge(id):
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
 
-
-    post_data = request.get_json()
     ajax = False
-    if not post_data is None:
-        if "ajax" in post_data:
-            ajax = post_data['ajax']
+    if 'ajax' in request.args:
+        ajax = True
 
     data = Album(album_id)
 
@@ -80,10 +77,10 @@ def add_album(id):
         alb = Album(id)
 
         form_data = request.get_json()
-
-        alb.tags_include = form_data['included']
-        alb.tags_exclude = form_data['excluded']
-        alb.save()
+        if form_data:
+            alb.tags_include = form_data['included']
+            alb.tags_exclude = form_data['excluded']
+            alb.save()
 
         album_id = str(alb.id)
     else:

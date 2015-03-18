@@ -8,8 +8,8 @@ from app import imagesDB, albumsDB
 
 class Album():
     def __init__(self, album_id=None):
-        self.tags_include = ""
-        self.tags_exclude = ""
+        self.tags_include = []
+        self.tags_exclude = []
         self.name = ""
         self.id = album_id
         self.imagecount = ""
@@ -73,7 +73,7 @@ class Album():
 
 
 
-        self.cursor = imagesDB.find(query_string).limit(5)
+        self.cursor = imagesDB.find(query_string)
         self.imagecount = self.cursor.count()
         albumsDB.update({"_id": self.id}, {"$set": {"imagecount": self.imagecount}}, upsert=False)
 

@@ -121,18 +121,11 @@ function submit_query() {
         data: JSON.stringify(post_data),
         dataType: 'html'
 
-    });
+    })
+     .done(function( html ) {
+            get_images()
+         });
 
-
-    request.done(function( msg ) {
-        album_id =  msg["album_id"];
-        get_images()
-    });
-
-
-    request.fail(function( jqXHR, textStatus ) {
-        alert( "Request failed: " + textStatus );
-    });
 
 }
 
@@ -141,17 +134,13 @@ function submit_query() {
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
-            url: "/image/album/" + album_id,
-            data: JSON.stringify({"ajax":true}),
+            url: "/image/album/" + album_id + "?ajax=1",
             dataType: 'html'
         })
          .done(function( html ) {
             $( "#image-list" ).html( html );
          });
     }
-
-
-
 
 
   if (album_id !== 'None') {
