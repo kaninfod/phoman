@@ -14,9 +14,23 @@ class Album():
         self.id = album_id
         self.imagecount = ""
         self.cursor = ""
+        self._paginator = None
+        self._position = 0
 
         if album_id:
             self._get_collection()
+
+
+    @property
+    def paginator(self):
+        return self._paginator
+
+    @paginator.setter
+    def paginator(self, paginator):
+        self.cursor.skip(paginator.min_rec)
+        self._position = paginator.min_rec
+        self._paginator = paginator
+
 
     def __iter__(self):
         return self
@@ -24,20 +38,30 @@ class Album():
     def __next__(self):
 
         if self.cursor and self.cursor.alive:
-            return image(next(self.cursor))
+            if self._paginator:
+                if self._position < self.paginator.max_rec:
+                    self._position += 1
+                    return image(next(self.cursor))
+                else:
+                    #self.position = 0
+                    raise StopIteration()
+            else:
+                return image(next(self.cursor))
         else:
+
             raise StopIteration()
 
     def __getitem__(self, index):
+
         if isinstance(index, int):
             return image(self.cursor[index])
         elif isinstance(index, slice):
-
-            lst = list()
-            self.cursor.rewind()
-            for item in self.cursor[index.start:index.stop]:
-                lst.append(image(item))
-            return lst
+            return self.cursor[index.start:index.stop]
+            # lst = list()
+            # self.cursor.rewind()
+            # for item in self.cursor[index.start:index.stop]:
+            #     lst.append(image(item))
+            # return lst
 
     def _get_collection(self):
         if self.id:

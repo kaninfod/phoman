@@ -50,7 +50,7 @@ class pagination(object):
 
     @property
     def max_rec(self):
-        return self.page * self.per_page
+        return min(self.page * self.per_page, self.total_count)
 
 
     @property

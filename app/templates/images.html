@@ -88,7 +88,6 @@
             </ul>
         </div>
         {% endfor %}
-        <input id="submit" class="btn btn-default" type="submit" value="Submit">
     </div>
 </div>
 
@@ -97,7 +96,7 @@
 
     <div class="row">
         <div class="row">
-            {% for img in data %}
+            {% for img in album %}
                 <div class=" col-md-3">
                     <div class="photo-group ">
                         <a href="/image/large/id/{{ img.db_id }}" class="photo-wrapper">
@@ -193,7 +192,7 @@ function submit_query() {
 
     function url() {
         if (album_id !== 'None') {
-            return "/image/album/" + album_id + "?ajax=1"
+            return "/album/save/" + album_id
         } else {
             return "/album/new"
         }

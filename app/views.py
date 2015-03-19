@@ -41,27 +41,17 @@ def showlarge(id):
     return render_template('showlarge.html', back_url=request.referrer, img=im)
 
 
-@app.route('/image/album/new', defaults={'album_id':5, 'page': 1})
+#@app.route('/image/album/new', defaults={'album_id':5, 'page': 1})
 @app.route('/image/album/<album_id>', defaults={'page': 1}, methods=['GET', 'POST'])
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
 
-    ajax = False
+
     alb = Album(album_id)
-    if 'ajax' in request.args:
-        ajax = True
-
-
-        form_data = request.get_json()
-        if form_data:
-            alb.tags_include = form_data['included']
-            alb.tags_exclude = form_data['excluded']
-            alb.save()
-        return jsonify({'status':'ok'})
-
-    perPage = 20
+    perPage = 12
     pagination = common.pagination(page, perPage, alb.imagecount)
-    data = alb[pagination.min_rec:pagination.max_rec]
+    alb.paginator = pagination
+
     return render_template('images.html',
                            data=data,
                            paginator=pagination,
@@ -71,48 +61,19 @@ def images(album_id, page):
 
 
 
+@app.route('/album/save/<album_id>', methods=['GET', 'POST'])
+def album_save(album_id):
+    ajax = False
+    alb = Album(album_id)
 
-@app.route('/album/new', defaults={'id': None}, methods=['GET', 'POST'])
-@app.route('/album/new/<id>', methods=['GET', 'POST'])
-def add_album(id):
-
-    if id:
-        alb = Album(id)
-
-        form_data = request.get_json()
-        if form_data:
-            alb.tags_include = form_data['included']
-            alb.tags_exclude = form_data['excluded']
-            alb.save()
-
-        album_id = str(alb.id)
-    else:
-        alb = Album()
-        alb.name = '__temp'
-        alb.save()
-        album_id = str(alb.id)
-    return render_template('album_add.html', title="Add new collection", album_id=album_id, keywords=get_keywords(), album=alb)
-
-    album_id =None
-    if request.method == 'POST':
-        if id:
-            alb = Album(id)
-        else:
-            alb = Album()
-
-        form_data = request.get_json()
-        alb.name = 'test'
+    form_data = request.get_json()
+    if form_data:
         alb.tags_include = form_data['included']
         alb.tags_exclude = form_data['excluded']
         alb.save()
-        album_id = str(alb.id)
-        return jsonify({"album_id":album_id})
-    elif request.method == 'GET':
-        alb = Album(id)
-        album_id = alb.id
+    return jsonify({'status':'ok'})
 
 
-    return render_template('album_add.html', title="Add new collection", album_id=album_id, keywords=get_keywords(), album=alb)
 
 @app.route('/album/list', defaults={'page': 1})
 @app.route('/album/list/page/<int:page>')
@@ -126,45 +87,7 @@ def collection(page):
 
 
 
-@app.route('/updateimagecounts')
-def updateimagecounts():
-    common.getCollections()
-    return redirect('/collections')
 
-
-@app.route('/addCol')
-def addCol():
-    for i in range(1, 12):
-        col = imageCollection()
-        col.name = "2014-%s" % i
-        date = datetime.date(2014, i, 1)
-        col.query.gt_date(date)
-        m = calendar.monthrange(2014, i)
-        col.query.lt_date(datetime.date(2014, i, m[1]))
-        col._save()
-
-    for i in range(1, 4):
-        col = imageCollection()
-        col.name = "2015-%s" % i
-        date = datetime.date(2015, i, 1)
-        col.query.gt_date(date)
-        m = calendar.monthrange(2015, i)
-        col.query.lt_date(datetime.date(2015, i, m[1]))
-        col._save()
-
-    return redirect('/collections')
-
-
-@app.route('/_add_numbers')
-def add_numbers():
-    a = request.args.get('a', 0, type=int)
-    b = request.args.get('b', 0, type=int)
-    return jsonify(result=a + b)
-
-
-@app.route('/test')
-def index():
-    return render_template('test.html')
 
 
 @app.route('/addcollection/id/<id>', methods=['GET', 'POST'])

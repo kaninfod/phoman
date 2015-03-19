@@ -134,8 +134,8 @@ function submit_query() {
         $.ajax({
             type: 'POST',
             contentType: 'application/json',
-            url: "/image/album/" + album_id + "?ajax=1",
-            dataType: 'html'
+            url: "/album/save/" + album_id + "?ajax=1",
+            dataType: 'json'
         })
          .done(function( html ) {
             $( "#image-list" ).html( html );
