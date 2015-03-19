@@ -7,24 +7,23 @@
 <div class="col-lg-8">
 
 
-    <img src="/image/store/image/{{ img.db_id }}/size/md" class="img-responsive img-thumbnail" alt="pichere">
+    <img src="/image/store/image/{{ img.db_id }}/size/{{ size }}" class="img-responsive img-thumbnail" alt="pichere">
 </div>
+
+
 <div class="col-lg-4">
-    <div class="list-group">
-      <a href="#" class="list-group-item active">
-        Image Information
-      </a>
-      <a href="#" class="list-group-item">{{ img.db_date_taken }}</a>
-      <a href="#" class="list-group-item">{{ img.db_original_height }}</a>
-      <a href="#" class="list-group-item">{{ img.db_original_width }}</a>
-      <a href="#" class="list-group-item">{{ img.db_tags }}</a>
-      <li class="list-group-item">Tags:
-          {% for tag in img.db_tags %}
+    <div class="panel panel-default">
+        <div class="panel-heading">Information</div>
+        <div class="panel-body">
 
-          <span class="badge">{{ tag }}</span>
-          {% endfor %}
+            {{ img.db_date_taken }}
+            {{ img.db_original_height }}
+            {{ img.db_original_width }}
+            {% for tag in img.db_tags %}
+                <span class="badge">{{ tag }}</span>
+            {% endfor %}
 
-      </li>
+        </div>
     </div>
 </div>
 {% endblock %}

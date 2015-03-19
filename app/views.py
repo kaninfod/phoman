@@ -4,14 +4,11 @@ from app import app
 from app import albumsDB
 
 from app.model import *
-from app.model.imageCollection import imageCollection
 from app.model.common import get_keywords
 
 from app.model.album import Album
-from app.model.image import image, ImageQuery
-
-from .forms import newCollectionForm
-from flask import request, flash, redirect, url_for, send_file, jsonify
+from app.model.image import image
+from flask import request,  url_for, send_file, jsonify
 
 @app.route('/')
 @app.route('/home')
@@ -23,20 +20,21 @@ def home():
 def imagestore(image_id, size):
     im = image(image_id=image_id)
     if im:
-        if size == "tm":
+        if size == "thumb":
             path = im.db_thumb_path
-        elif size == "md":
+        elif size == "medium":
             path = im.db_medium_path
-        elif size == "lg":
+        elif size == "large":
             path = im.db_large_path
-
+        elif size == "original":
+            path = im.db_original_path
     return send_file(path)
 
 
-@app.route('/image/large/id/<id>')
-def showlarge(id):
+@app.route('/image/<size>/<id>')
+def showlarge(size, id):
     im = image(image_id=id)
-    return render_template('showlarge.html', back_url=request.referrer, img=im)
+    return render_template('showlarge.html', back_url=request.referrer, size=size, img=im)
 
 
 
@@ -78,37 +76,6 @@ def collection(page):
 
     return render_template('album_list.html', data=data, paginator=pagination)
 
-
-
-
-
-
-@app.route('/addcollection/id/<id>', methods=['GET', 'POST'])
-def addCollection():
-    form = newCollectionForm()
-    if request.method == "POST" and form.validate():
-        col = imageCollection()
-        col.query.db_make = form.make.data
-        col.query.db_model = form.model.data
-        col.name = form.collectionName.data
-        col.query.date_taken_gte = form.dateTaken_gt.data
-        col.query.date_taken_lt = form.dateTaken_lt.data
-        col._save()
-        flash(col.imagecount)
-        return redirect('/addcollection')
-    return render_template('addCollection.html', title="Add new collection", form=form)
-
-
-@app.route('/sync')
-def sync():
-    alb = Album()
-    alb.name = "my album"
-    alb.tags_include = ["LGE"]
-    alb.tags_exclude = ["Sunday"]
-    alb._get_images()
-    alb.save()
-
-    return render_template('home.html')
 
 
 def url_for_other_page(page):
