@@ -1,18 +1,16 @@
 from flask import render_template
 
 from app import app
-from app import collectionsDB
 from app import albumsDB
-import os
+
 from app.model import *
 from app.model.imageCollection import imageCollection
 from app.model.common import get_keywords
 
 from app.model.album import Album
 from app.model.image import image, ImageQuery
-import datetime
-import calendar
-from .forms import newCollectionForm, new_album
+
+from .forms import newCollectionForm
 from flask import request, flash, redirect, url_for, send_file, jsonify
 
 @app.route('/')
@@ -41,29 +39,24 @@ def showlarge(id):
     return render_template('showlarge.html', back_url=request.referrer, img=im)
 
 
-#@app.route('/image/album/new', defaults={'album_id':5, 'page': 1})
+
 @app.route('/image/album/<album_id>', defaults={'page': 1}, methods=['GET', 'POST'])
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
 
 
     alb = Album(album_id)
-    perPage = 12
+    perPage = 20
     pagination = common.pagination(page, perPage, alb.imagecount)
     alb.paginator = pagination
 
-    return render_template('images.html',
-                           data=data,
-                           paginator=pagination,
-                           ajax=ajax,
-                           album = alb,
-                           keywords=get_keywords())
+    return render_template('images.html',paginator=pagination,album = alb, keywords=get_keywords())
 
 
 
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
 def album_save(album_id):
-    ajax = False
+
     alb = Album(album_id)
 
     form_data = request.get_json()
