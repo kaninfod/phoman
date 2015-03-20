@@ -59,6 +59,7 @@ def album_save(album_id):
 
     form_data = request.get_json()
     if form_data:
+        alb.name = form_data['name']
         alb.tags_include = form_data['included']
         alb.tags_exclude = form_data['excluded']
         alb.save()

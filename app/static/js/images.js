@@ -7,6 +7,15 @@
 
 $(document).ready(function() {
 
+    $("#save_album_name").click(function() {
+        if (album_id !== 'None') {
+
+            submit_query()
+        }
+    })
+
+
+
     $(".include-keyword").click(function() {
 
         parent_div = $(this).closest("div");
@@ -70,7 +79,7 @@ $(document).ready(function() {
             included.push( $(this).attr("id") );
         });
 
-        post_data = {'included':included, 'excluded':excluded};
+        post_data = {'name': $("#album_name").val(),'included':included, 'excluded':excluded};
 
 
         function url() {
