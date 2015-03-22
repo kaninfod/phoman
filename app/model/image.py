@@ -219,6 +219,8 @@ class image(ImageBase):
         self.db_tags.append(self.db_date_taken.strftime("%B"))
         self.db_tags.append(self.db_date_taken.strftime("%Y"))
         self.db_tags.append(self.db_date_taken.strftime("%A"))
+        self.db_tags.append("Week " + self.db_date_taken.strftime("%U"))
+
         self.db_tags.append(self.db_model)
         self.db_tags.append(self.db_make)
 
@@ -227,6 +229,12 @@ class image(ImageBase):
 
         if self.db_state:
             self.db_tags.append(self.db_state)
+
+        if not self.db_location:
+            self.db_tags.append("No Location")
+
+        if self.db_has_exif:
+            self.db_tags.append("No EXIF")
 
         if 5 <= self.db_date_taken.hour < 12:
             self.db_tags.append("Morning")
