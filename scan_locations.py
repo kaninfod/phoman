@@ -3,7 +3,7 @@ __author__ = 'hingem'
 
 from app.model.image import image
 from app import *
-import logging
+
 
 images = imagesDB.find({'db_location':False})
 

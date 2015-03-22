@@ -7,6 +7,11 @@ import logging
 app = Flask(__name__)
 app.secret_key = 'ldjnfieveioecoecococeockeock'
 
+
+
+
+
+
 # Mac
 #app.config['IMAGE_STORE'] = "/Users/hingem/my_image_store/"
 #app.config["IMAGE_THUMBS"] = "/Users/hingem/thumbs/"
@@ -15,6 +20,13 @@ app.secret_key = 'ldjnfieveioecoecococeockeock'
 #asus
 app.config['IMAGE_STORE'] = "/home/martin/Pictures/000 Master - Auto Backup/2014 - copied across"
 app.config["IMAGE_THUMBS"] = "/home/martin/Pictures/thumbs/"
+
+
+app.config["IMAGE_THUMB"] = (256, 256)
+app.config["IMAGE_MEDIUM"] = (600, 800)
+app.config["IMAGE_LARGE"] = (1024, 1200)
+
+
 
 client = MongoClient('localhost', 27017)
 db = client['phoman3']

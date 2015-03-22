@@ -6,7 +6,7 @@ from bson.objectid import ObjectId
 from bson import json_util
 import json
 
-from app.model.image import image, ImageQuery
+from app.model.image import image
 from app import collectionsDB, imagesDB
 
 

@@ -1,17 +1,23 @@
 import os
 import errno
-import json
+
 import datetime
 
 from bson.objectid import ObjectId
 from PIL import Image, ImageOps
-from bson import json_util
 
 from app import *
 from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
 
 
-class ImageBase():
+
+
+
+
+
+
+
+class image():
     db_filename = None
     db_original_path = None
     db_large_path = None
@@ -62,75 +68,9 @@ class ImageBase():
                 setattr(self, field, record[field])
 
 
-class ImageQuery(ImageBase):
-    def __init__(self):
-        self._query = {}
-        self.date_taken_gte = ""
-        self.date_taken_lt = ""
-
-    def gt_date(self, date, date_field="date_taken"):
-        if isinstance(date, datetime.date):
-            date = self._date_to_datetime(date)
-
-        if date_field in self._query:
-            self._query[date_field].update({"$gte": date})
-        else:
-            self._query[date_field] = {"$gte": date}
-
-        self.date_taken_gte = date
-
-    def lt_date(self, date, date_field="date_taken"):
-        if isinstance(date, datetime.date):
-            date = self._date_to_datetime(date)
-
-        if date_field in self._query:
-            self._query[date_field].update({"$lt": date})
-        else:
-            self._query[date_field] = {"$lt": date}
-
-        self.date_taken_lt = date
-
-    def __setattr__(self, name, value):
-        _blacklist = ["_query", "date_taken_lt", "date_taken_gte"]
-        if not name in _blacklist and value != "":
-            self._query[name] = value
-        object.__setattr__(self, name, value)
-
-    @staticmethod
-    def _date_to_datetime(date):
-        return datetime.datetime.combine(date, datetime.time.min)
-
-    @property
-    def query(self):
-        if self._query:
-            return json.dumps(self._query, default=json_util.default)
-        else:
-            return None
-
-    @query.setter
-    def query(self, value):
-        self._query = json.loads(value, object_hook=json_util.object_hook)
 
 
-    def serialize(self):
-        t = self.__dict__.copy()
-        t.pop("_query")
-        t.update({"query": self.query})
 
-        return t
-        # return json.dumps(self.__dict__, default=json_util.default)
-
-
-def generate_thumb(image, path, size):
-    if not os.path.isfile(path):
-        thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
-        thumb.save(path, "JPEG")
-
-
-class image(ImageBase):
-    THUMB_SIZE = (256, 256)
-    MEDIUM_SIZE = (600, 800)
-    LARGE_SIZE = (1024, 1200)
 
 
     def __init__(self, image_source=None, image_id=None, update_location=False):
@@ -184,49 +124,17 @@ class image(ImageBase):
         self.set_tags()
         self.__mongo_save__()
 
-    def add_location_data(self):
-
-
-        if not self.db_location and self.db_latitude and self.db_longitude:
-            print(self.db_location)
-            point = "%s,%s" % (self.db_latitude, self.db_longitude)
-            location = lookup_location(point)
-
-            if location:
-                if "error" in location.raw:
-                    print(location.raw["error"])
-                elif "address" in location.raw:
-                    if "country" in location.raw["address"]:
-                        self.db_country = location.raw["address"]['country']
-                    if "state" in location.raw["address"]:
-                        self.db_state = location.raw["address"]['state']
-                    if "road" in location.raw["address"]:
-                        self.db_road = location.raw["address"]['road']
-
-                    self.db_address = location.raw['display_name']
-
-                    self.db_location = True
-                else:
-                    print()
-            else:
-                self.db_location = False
-        else:
-            print(self.db_location)
 
     def set_tags(self):
 
         self.db_tags = []
+
+        #time tags
         self.db_tags.append(self.db_date_taken.strftime("%B"))
         self.db_tags.append(self.db_date_taken.strftime("%Y"))
         self.db_tags.append(self.db_date_taken.strftime("%A"))
         self.db_tags.append(self.db_model)
         self.db_tags.append(self.db_make)
-
-        if self.db_country:
-            self.db_tags.append(self.db_country)
-
-        if self.db_state:
-            self.db_tags.append(self.db_state)
 
         if 5 <= self.db_date_taken.hour < 12:
             self.db_tags.append("Morning")
@@ -237,6 +145,14 @@ class image(ImageBase):
         if 23 <= self.db_date_taken.hour < 5:
             self.db_tags.append("Night")
 
+        #Location tags
+        if self.db_country:
+            self.db_tags.append(self.db_country)
+
+        if self.db_state:
+            self.db_tags.append(self.db_state)
+
+        #Size tags
         if self.db_size <= 1024000:
             self.db_tags.append("Small file")
         if 1024000 < self.db_size < 3600000:
@@ -277,16 +193,24 @@ class image(ImageBase):
         self.db_size = os.path.getsize(file)
 
     def _generate_webimages(self):
+        thumb_size = app.config["IMAGE_THUMB"]
+        medium_size = app.config["IMAGE_MEDIUM"]
+        large_size = app.config["IMAGE_LARGE"]
 
         im = Image.open(self.db_original_path)
-        self.generate_image(im, self.db_medium_path, self.MEDIUM_SIZE)
-        generate_thumb(im, self.db_thumb_path, self.THUMB_SIZE)
+        self.generate_image(im, self.db_medium_path, medium_size)
+        self.generate_thumb(im, self.db_thumb_path, thumb_size)
 
     def generate_image(self, image, path, size):
 
         if not os.path.isfile(self.db_medium_path):
             image.thumbnail(size, Image.ANTIALIAS)
             image.save(path, "JPEG")
+
+    def generate_thumb(self, image, path, size):
+        if not os.path.isfile(path):
+            thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
+            thumb.save(path, "JPEG")
 
 
     def _ensure_dir(self, dirname):
