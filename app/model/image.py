@@ -133,8 +133,22 @@ class image():
         self.db_tags.append(self.db_date_taken.strftime("%B"))
         self.db_tags.append(self.db_date_taken.strftime("%Y"))
         self.db_tags.append(self.db_date_taken.strftime("%A"))
+        self.db_tags.append("Week " + self.db_date_taken.strftime("%U"))
+
         self.db_tags.append(self.db_model)
         self.db_tags.append(self.db_make)
+
+        if self.db_country:
+            self.db_tags.append(self.db_country)
+
+        if self.db_state:
+            self.db_tags.append(self.db_state)
+
+        if not self.db_location:
+            self.db_tags.append("No Location")
+
+        if self.db_has_exif:
+            self.db_tags.append("No EXIF")
 
         if 5 <= self.db_date_taken.hour < 12:
             self.db_tags.append("Morning")
@@ -145,14 +159,6 @@ class image():
         if 23 <= self.db_date_taken.hour < 5:
             self.db_tags.append("Night")
 
-        #Location tags
-        if self.db_country:
-            self.db_tags.append(self.db_country)
-
-        if self.db_state:
-            self.db_tags.append(self.db_state)
-
-        #Size tags
         if self.db_size <= 1024000:
             self.db_tags.append("Small file")
         if 1024000 < self.db_size < 3600000:
