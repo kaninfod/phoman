@@ -1,14 +1,12 @@
-from flask import render_template
-
 from app import app
 
 from app.model.mongo_db import get_image, save_image, get_albums, get_keywords
 from app.model import *
 
-
 from app.model.album import Album
 from app.model.image import image
-from flask import request,  url_for, send_file, jsonify
+from flask import request,  url_for, send_file, jsonify, render_template
+
 
 @app.route('/')
 @app.route('/home')

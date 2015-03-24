@@ -57,7 +57,6 @@ class Album():
         elif isinstance(index, slice):
             return self.image_collection[index.start:index.stop]
 
-
     def _get_collection(self):
         if self.id:
             record = get_album(self.id)
@@ -69,10 +68,8 @@ class Album():
 
                 self._get_images()
 
-
     def _get_images(self):
         self.image_collection = get_images_in_album(self)
-
 
     def save(self):
         save_album(self)
