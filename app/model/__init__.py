@@ -1,3 +1,3 @@
 __author__ = 'martin'
 
-__all__ = ['image', 'common', 'imageCollection', 'album']
+__all__ = ['image', 'common', 'album']

@@ -1,10 +1,10 @@
 from flask import render_template
 
 from app import app
-from app import albumsDB
 
+from app.model.mongo_db import get_image, save_image, get_albums, get_keywords
 from app.model import *
-from app.model.common import get_keywords
+
 
 from app.model.album import Album
 from app.model.image import image
@@ -45,7 +45,7 @@ def images(album_id, page):
 
     alb = Album(album_id)
     perPage = 20
-    pagination = common.pagination(page, perPage, alb.imagecount)
+    pagination = common.pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
 
     return render_template('images.html',paginator=pagination,album = alb, keywords=get_keywords())
@@ -71,7 +71,7 @@ def album_save(album_id):
 @app.route('/album/list/page/<int:page>')
 def collection(page):
     perPage = 10
-    data = albumsDB.find()
+    data = get_albums()
     pagination = common.pagination(page, perPage, data.count())
     data = data[pagination.min_rec:pagination.max_rec]
 

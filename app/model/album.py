@@ -1,10 +1,8 @@
 __author__ = 'martin'
 
-from bson.objectid import ObjectId
 
 from app.model.image import image
-from app import imagesDB, albumsDB
-
+from app.model.mongo_db import save_album, get_album, get_images_in_album
 
 class Album():
     def __init__(self, album_id=None):
@@ -12,8 +10,9 @@ class Album():
         self.tags_exclude = []
         self.name = ""
         self.id = album_id
-        self.imagecount = ""
-        self.cursor = ""
+        self.image_count = ""
+
+        self.image_collection = []
         self._paginator = None
         self._position = 0
 
@@ -27,7 +26,6 @@ class Album():
 
     @paginator.setter
     def paginator(self, paginator):
-        self.cursor.skip(paginator.min_rec)
         self._position = paginator.min_rec
         self._paginator = paginator
 
@@ -37,16 +35,17 @@ class Album():
 
     def __next__(self):
 
-        if self.cursor and self.cursor.alive:
+        if self.image_collection:
+            self._position += 1
             if self._paginator:
-                if self._position < self.paginator.max_rec:
-                    self._position += 1
-                    return image(next(self.cursor))
+                if self._position - 1 < self.paginator.max_rec:
+
+                    return image(image_id=self.image_collection[self._position-1])
                 else:
-                    #self.position = 0
                     raise StopIteration()
             else:
-                return image(next(self.cursor))
+                return image(next(self.image_collection))
+
         else:
 
             raise StopIteration()
@@ -54,74 +53,27 @@ class Album():
     def __getitem__(self, index):
 
         if isinstance(index, int):
-            return image(self.cursor[index])
+            return image(self.image_collection[index])
         elif isinstance(index, slice):
-            return self.cursor[index.start:index.stop]
-            # lst = list()
-            # self.cursor.rewind()
-            # for item in self.cursor[index.start:index.stop]:
-            #     lst.append(image(item))
-            # return lst
+            return self.image_collection[index.start:index.stop]
+
 
     def _get_collection(self):
         if self.id:
-            self.album = albumsDB.find_one({"_id": ObjectId(self.id)})
-            if self.album:
-                self.id = self.album["_id"]
-                self.name = self.album["name"]
-                self.tags_exclude = self.album["tags_exclude"]
-                self.tags_include = self.album["tags_include"]
+            record = get_album(self.id)
+            if record:
+                self.id = record["_id"]
+                self.name = record["name"]
+                self.tags_exclude = record["tags_exclude"]
+                self.tags_include = record["tags_include"]
 
                 self._get_images()
 
 
     def _get_images(self):
-
-
-
-
-
-
-        #
-        # if self.tags_include:
-        #     query_string.update(
-        #         {'db_tags':
-        #              {
-        #                  '$all': self.tags_include
-        #              }
-        #          })
-        #
-        # if self.tags_exclude:
-        #     query_string.update(
-        #         {'db_tags':
-        #              {
-        #                  '$nin': self.tags_exclude
-        #              }
-        #          })
-        query_string = {}
-        if self.tags_exclude or self.tags_include:
-            query_string.update({
-                '$and':[
-                    {'db_tags':{'$in':self.tags_include}},
-                    {'db_tags':{'$nin':self.tags_exclude}}
-                ]})
-
-
-        self.cursor = imagesDB.find(query_string)
-        self.imagecount = self.cursor.count()
-        albumsDB.update({"_id": self.id}, {"$set": {"imagecount": self.imagecount}}, upsert=False)
+        self.image_collection = get_images_in_album(self)
 
 
     def save(self):
-        alb = {
-            'tags_exclude': self.tags_exclude,
-            'tags_include': self.tags_include,
-            'image_count': self.imagecount,
-            'name': self.name
-        }
-
-        if self.id:
-            albumsDB.update({'_id': ObjectId(self.id)}, {"$set": alb})
-        else:
-            self.id = str(albumsDB.insert(alb))
+        save_album(self)
         self._get_images()

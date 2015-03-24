@@ -1,14 +1,9 @@
 __author__ = 'martin'
 from flask import Flask
-from pymongo import MongoClient
 import logging
-
 
 app = Flask(__name__)
 app.secret_key = 'ldjnfieveioecoecococeockeock'
-
-
-
 
 
 
@@ -28,11 +23,7 @@ app.config["IMAGE_LARGE"] = (1024, 1200)
 
 
 
-client = MongoClient('localhost', 27017)
-db = client['phoman3']
-imagesDB = db['images']
-collectionsDB = db['collections']
-albumsDB = db['albums']
+
 
 app.config['DEBUG'] = True
 

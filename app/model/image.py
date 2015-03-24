@@ -3,18 +3,11 @@ import errno
 
 import datetime
 
-from bson.objectid import ObjectId
-from PIL import Image, ImageOps
 
+from PIL import Image, ImageOps
 from app import *
 from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
-
-
-
-
-
-
-
+from app.model.mongo_db import get_image, save_image
 
 
 class image():
@@ -49,14 +42,8 @@ class image():
         return [i for i in dir(self) if i.startswith('db_')]
 
     def __mongo_save__(self):
-        imgobject = {}
-
-        for field in self.__mongo_attributes__():
-            if not field == "db_id":
-                imgobject[field] = getattr(self, field)
-
-        imagesDB.update({"date_taken": self.db_date_taken}, {"$set": imgobject}, upsert=True)
-        self.db_id = str(imagesDB.find(imgobject)[0]["_id"])
+        save_image(self)
+        exit()
 
 
     def __mongo_populate__(self, record):
@@ -77,14 +64,15 @@ class image():
         self.db_tags = []
 
         if image_id:
-            image_source = imagesDB.find_one({'_id': ObjectId(image_id)})
+            self.__mongo_populate__(get_image(image_id))
 
-        if isinstance(image_source, str):
-            self._image_from_file(image_source)
         else:
-            self.__mongo_populate__(image_source)
-            if update_location:
-                lookup_location(self)
+            if isinstance(image_source, str):
+                self._image_from_file(image_source)
+            else:
+                self.__mongo_populate__(image_source)
+                if update_location:
+                    lookup_location(self)
 
 
     def _image_from_file(self, file):

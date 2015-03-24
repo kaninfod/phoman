@@ -21,7 +21,7 @@
         <td><a href="/album/new/{{ col._id }}">edit</a></td>
         <td>{% for tag in col.tags_include %} <span class="badge">{{ tag }}</span> {% endfor %}</td>
         <td>{% for tag in col.tags_exclude %} <span class="badge">{{ tag }}</span> {% endfor %}</td>
-        <td><span class="badge">{{col.imagecount}}</span></td>
+        <td><span class="badge">{{col.image_count}}</span></td>
     </tr>
     {% endfor %}
     </tbody>

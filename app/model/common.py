@@ -1,40 +1,9 @@
 __author__ = 'martin'
 
-import os
-from app import *
 
-from app.model.imageCollection import imageCollection, image
-from app import collectionsDB, albumsDB
+
 from math import ceil
 
-
-def do_loop(loop):
-    path = app.config["IMAGE_STORE"]
-    for root, dirnames, filenames in os.walk(path):
-        for filename in filenames:
-            if os.path.splitext(filename)[1] == ".jpg":
-                fn = root + "/" + filename
-                img = image(fn)
-                print(filename)
-    loop.stop()
-
-
-
-
-
-def get_collections():
-    col_db = collectionsDB.find()
-    for c in col_db:
-        col = imageCollection(c['_id'])
-
-    return collectionsDB.find()
-
-
-def get_keywords():
-    keywords = imagesDB.distinct('db_tags')
-    k = [([x, y]) for x, y in zip(keywords, keywords)]
-
-    return k
 
 
 class pagination(object):
