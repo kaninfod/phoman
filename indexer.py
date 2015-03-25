@@ -3,10 +3,8 @@ from app.model.image import image
 from app import *
 import os
 import logging
-
-from optparse import OptionParser
 import argparse
-
+from app.model.mongo_db import get_image, save_image, locate_image, get_images
 
 file_list = "file.lst"
 file_store = app.config['IMAGE_STORE']
@@ -30,7 +28,7 @@ def scan_files():
 
 def scan_locations():
 
-    images = imagesDB.find({'db_location':False})
+    images = get_images({'db_latitude':{"$ne":None}})
     for img in images:
         img_obj = image(img, update_location=True)
         img_obj.set_tags()
@@ -38,7 +36,7 @@ def scan_locations():
 
 
 
-def do_loop():
+def scan_files_mac():
     os.system("")
     path = app.config["IMAGE_STORE"]
     for root, dirnames, filenames in os.walk(path):
@@ -58,6 +56,9 @@ if __name__ == "__main__":
     parser.add_argument('--files', dest='files', action='store_true',
                        help='sum the integers (default: find the max)')
 
+    parser.add_argument('--mac', dest='mac', action='store_true',
+                       help='sum the integers (default: find the max)')
+
     parser.add_argument('--locations', dest='locations', action='store_true',
                        help='sum the integers (default: find the max)')
 
@@ -67,6 +68,8 @@ if __name__ == "__main__":
         scan_files()
     elif args.locations:
         scan_locations()
+    elif args.mac:
+        scan_files_mac()
 
     #logging.basicConfig(format='%(asctime)s %(message)s', filename='image_scan.log',level=logging.DEBUG)
     #do_loop()

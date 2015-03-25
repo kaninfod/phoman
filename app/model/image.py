@@ -7,7 +7,7 @@ import datetime
 from PIL import Image, ImageOps
 from app import *
 from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
-from app.model.mongo_db import get_image, save_image
+from app.model.mongo_db import get_image, save_image, locate_image
 
 
 class image():
@@ -43,7 +43,7 @@ class image():
 
     def __mongo_save__(self):
         save_image(self)
-        exit()
+
 
 
     def __mongo_populate__(self, record):
@@ -56,10 +56,6 @@ class image():
 
 
 
-
-
-
-
     def __init__(self, image_source=None, image_id=None, update_location=False):
         self.db_tags = []
 
@@ -69,7 +65,8 @@ class image():
         else:
             if isinstance(image_source, str):
                 self._image_from_file(image_source)
-            else:
+                print()
+            elif isinstance(image_source, dict):
                 self.__mongo_populate__(image_source)
                 if update_location:
                     lookup_location(self)
@@ -86,13 +83,13 @@ class image():
         else:
 
             if "ImageUniqueID" in self.exif:
-                db_entry = imagesDB.find_one({'db_ImageUniqueID': self.exif['ImageUniqueID']})
-                if db_entry:
-                    self.db_country = db_entry["db_country"]
-                    self.db_state = db_entry["db_state"]
-                    self.db_road = db_entry["db_road"]
-                    self.db_address = db_entry["db_address"]
-                    self.db_location = db_entry["db_location"]
+                record = locate_image("db_ImageUniqueID", self.db_ImageUniqueID)
+                if record:
+                    self.db_country = record["db_country"]
+                    self.db_state = record["db_state"]
+                    self.db_road = record["db_road"]
+                    self.db_address = record["db_address"]
+                    self.db_location = record["db_location"]
 
             if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
                 if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
@@ -107,6 +104,7 @@ class image():
             self.add_exif_data("Orientation", "db_orientation")
             self.add_exif_data("Flash", "db_flash_fired")
             self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
+
 
         self._generate_files(file)
         self.set_tags()
@@ -135,7 +133,7 @@ class image():
         if not self.db_location:
             self.db_tags.append("No Location")
 
-        if self.db_has_exif:
+        if not self.db_has_exif:
             self.db_tags.append("No EXIF")
 
         if 5 <= self.db_date_taken.hour < 12:

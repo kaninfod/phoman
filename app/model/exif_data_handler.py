@@ -84,7 +84,7 @@ def lookup_location(image):
         except Exception as e:
             app.logger.warning(e)
         else:
-            if location:
+            if image.db_longitude and image.db_latitude:
                 if "error" in location.raw:
                     app.logger.warning(location.raw["error"])
                 elif "address" in location.raw:

@@ -7,10 +7,21 @@ from app.model.album import Album
 from app.model.image import image
 from flask import request,  url_for, send_file, jsonify, render_template
 
+from app.model.sqlite_db import _initiate_db
+
+from app.model.sqlite_db import save_image as sql_save, get_image as sql_get_image
+
 
 @app.route('/')
 @app.route('/home')
 def home():
+    _initiate_db()
+    imagex = image(image_id="5510f6cd7aed495f7a2bb979")
+
+    sql_save(imagex)
+    id = imagex.db_id
+    img = sql_get_image(id)
+
 
     return render_template('home.html')
 

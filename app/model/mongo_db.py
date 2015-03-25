@@ -31,6 +31,24 @@ def get_image(id):
     record = imagesDB.find_one({'_id': ObjectId(id)})
     return record
 
+def get_keywords():
+    keywords = imagesDB.distinct('db_tags')
+    keyword_list = [([x, y]) for x, y in zip(keywords, keywords)]
+
+    return keyword_list
+
+
+def locate_image(field, value):
+
+    record = imagesDB.find_one({field: value})
+    return record
+
+
+def get_images(query=None):
+
+    records = imagesDB.find(query)
+    return records
+
 
 def get_images_in_album(album):
         query_string = {}
@@ -73,8 +91,3 @@ def get_albums():
 
 
 
-def get_keywords():
-    keywords = imagesDB.distinct('db_tags')
-    keyword_list = [([x, y]) for x, y in zip(keywords, keywords)]
-
-    return keyword_list

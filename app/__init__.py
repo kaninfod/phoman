@@ -8,13 +8,13 @@ app.secret_key = 'ldjnfieveioecoecococeockeock'
 
 
 # Mac
-#app.config['IMAGE_STORE'] = "/Users/hingem/my_image_store/"
-#app.config["IMAGE_THUMBS"] = "/Users/hingem/thumbs/"
-#app.config["LOOKUP_LOCATION"] = True
+app.config['IMAGE_STORE'] = "/Users/hingem/my_image_store/"
+app.config["IMAGE_THUMBS"] = "/Users/hingem/thumbs/"
+app.config["LOOKUP_LOCATION"] = True
 
 #asus
-app.config['IMAGE_STORE'] = "/home/martin/Pictures/000 Master - Auto Backup/2014 - copied across"
-app.config["IMAGE_THUMBS"] = "/home/martin/Pictures/thumbs/"
+#app.config['IMAGE_STORE'] = "/home/martin/Pictures/000 Master - Auto Backup/2014 - copied across"
+#app.config["IMAGE_THUMBS"] = "/home/martin/Pictures/thumbs/"
 
 
 app.config["IMAGE_THUMB"] = (256, 256)
