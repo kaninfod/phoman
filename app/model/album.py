@@ -44,7 +44,10 @@ class Album():
                 else:
                     raise StopIteration()
             else:
-                return image(next(self.image_collection))
+                if self._position <= len(self.image_collection):
+                    return image(image_id=self.image_collection[self._position-1])
+                else:
+                    raise StopIteration()
 
         else:
 

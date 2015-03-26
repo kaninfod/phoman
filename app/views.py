@@ -5,22 +5,33 @@ from app.model import *
 
 from app.model.album import Album
 from app.model.image import image
-from flask import request,  url_for, send_file, jsonify, render_template
+from flask import request,  url_for, send_file, jsonify, render_template, g
 
 from app.model.sqlite_db import _initiate_db
 
-from app.model.sqlite_db import save_image as sql_save, get_image as sql_get_image
-
+#from app.model.sqlite_db import save_image as sql_save, get_image as sql_get_image
+from app.model.sqlite import save_image as sql_save
 
 @app.route('/')
 @app.route('/home')
 def home():
-    _initiate_db()
-    imagex = image(image_id="5510f6cd7aed495f7a2bb979")
+    #_initiate_db()
 
-    sql_save(imagex)
-    id = imagex.db_id
-    img = sql_get_image(id)
+
+    # album_id = "5507b9a124c4b80d8c22c9dd"
+    # alb = Album(album_id)
+    # for ima in alb:
+    #
+    #
+    #     try:
+    #         imagex = image(image_id=ima.db_id)
+    #     except Exception as e:
+    #         print()
+    #
+    #     sql_save(imagex)
+
+    #id = imagex.db_id
+    #img = sql_get_image(id)
 
 
     return render_template('home.html')
@@ -97,3 +108,9 @@ def url_for_other_page(page):
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()

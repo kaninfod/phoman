@@ -31,6 +31,7 @@ def _execute_sql(sql):
     cursor = con.cursor()
     cursor.execute(sql)
     con.commit()
+
     return con.total_changes, cursor.lastrowid, cursor
 
 def _initiate_db():
@@ -130,11 +131,11 @@ def save_image(image):
 
         image.db_id = last
 
+    _insert_keyword(image.db_tags, image.db_id)
 
-
-    for keyword in image.db_tags:
-        keyword_id = _insert_keyword(keyword)
-        _insert_keyword_mapping(keyword_id, image.db_id)
+    #for keyword in image.db_tags:
+    #    keyword_id = _insert_keyword(keyword)
+    #    _insert_keyword_mapping(keyword_id, image.db_id)
 
 
 def _insert_keyword_mapping(keyword_id, image_id):
@@ -145,21 +146,31 @@ def _insert_keyword_mapping(keyword_id, image_id):
 
     _execute_sql(sql)
 
-def _insert_keyword(keywords):
+def _insert_keyword(keywords, image_id):
 
-    sql_insert_keyword = """
-        INSERT INTO KEYWORDS(keyword) VALUES (?)
-    """
+    for keyword in keywords:
+        sql_insert_keyword = """
+            INSERT INTO KEYWORDS(keyword) VALUES ('%s')
+        """ % (keyword)
 
-    con = _get_db()
-    cursor = con.cursor()
 
-    try:
-        cursor.execute(sql_insert_keyword,(keyword,))
-        con.commit()
-        return cursor.lastrowid
-    except sqlite3.IntegrityError as e:
-        return _get_keyword(keyword=keyword)
+        try:
+            change, last, cursor = _execute_sql(sql_insert_keyword)
+            keyword_id = cursor.lastrowid
+        except sqlite3.IntegrityError as e:
+
+            select_updated_sql = "SELECT _id FROM keywords WHERE keyword = '%s'" % (keyword)
+            change, last, cursor = _execute_sql(select_updated_sql)
+            try:
+                keyword_id = cursor.fetchone()[0]
+            except Exception as e:
+                con = _get_db()
+                cursor = con.cursor()
+                cursor.execute(select_updated_sql)
+                record = cursor.fetchone()
+                print(e)
+                #_insert_keyword_mapping(keyword_id, image_id)
+
 
 
 def _get_keyword(id=None, keyword=None):
