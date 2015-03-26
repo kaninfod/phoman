@@ -15,24 +15,6 @@ from app.model.sqlite import save_image as sql_save
 @app.route('/')
 @app.route('/home')
 def home():
-    #_initiate_db()
-
-
-    # album_id = "5507b9a124c4b80d8c22c9dd"
-    # alb = Album(album_id)
-    # for ima in alb:
-    #
-    #
-    #     try:
-    #         imagex = image(image_id=ima.db_id)
-    #     except Exception as e:
-    #         print()
-    #
-    #     sql_save(imagex)
-
-    #id = imagex.db_id
-    #img = sql_get_image(id)
-
 
     return render_template('home.html')
 
