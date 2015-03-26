@@ -7,11 +7,6 @@ from app.model.album import Album
 from app.model.image import image
 from flask import request,  url_for, send_file, jsonify, render_template, g
 
-from app.model.sqlite_db import _initiate_db
-
-#from app.model.sqlite_db import save_image as sql_save, get_image as sql_get_image
-from app.model.sqlite import save_image as sql_save
-
 @app.route('/')
 @app.route('/home')
 def home():
@@ -50,7 +45,7 @@ def images(album_id, page):
     pagination = common.pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
 
-    return render_template('images.html',paginator=pagination,album = alb, keywords=get_keywords())
+    return render_template('image_viewer/images.html',paginator=pagination,album = alb, keywords=get_keywords())
 
 
 

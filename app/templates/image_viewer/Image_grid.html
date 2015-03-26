@@ -1,0 +1,78 @@
+<style type="text/css">
+
+
+    .thumbnail {
+        position:relative;
+        overflow:hidden;
+    }
+
+    .caption {
+        position:absolute;
+        top:0;
+        right:0;
+        background:rgba(116, 202, 199, 0.75);
+        width:100%;
+        height:100%;
+        padding:2%;
+        display: none;
+        text-align:center;
+        color:#fff !important;
+        z-index:2;
+    }
+
+</style>
+
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        {{ album.name }}
+        <span class="badge">{{ album.image_count }}</span>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mymodal">Rename</button>
+    </div>
+    <div class="panel-body">
+
+        <div class="row">
+
+            <div class="row">
+                {% for img in album %}
+
+                    <div class="col-md-3">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <p>{{ img.db_date_taken }}</p>
+                                {% for keyword in img.db_tags %}
+                                        <span class="badge">{{ keyword }}</span>
+                                {% endfor %}
+                                <p><a href="/image/medium/{{ img.db_id }}" class="label label-danger" rel="tooltip" title="Zoom">Large</a>
+                                <a href="/image/original/{{ img.db_id }}" class="label label-danger" rel="tooltip" title="Download now">Original</a></p>
+                            </div>
+                            <img src="/image/store/image/{{ img.db_id }}/size/thumb" alt="...">
+                        </div>
+                  </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+
+    var album_id = "{{ album.id }}";
+
+    $("[rel='tooltip']").tooltip();
+
+    $('.thumbnail').hover(
+        function(){
+            $(this).find('.caption').fadeIn(250)
+        },
+        function(){
+            $(this).find('.caption').slideUp(100); //.fadeOut(205)
+        }
+    );
+
+
+ </script>

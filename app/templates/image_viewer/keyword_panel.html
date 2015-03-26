@@ -1,0 +1,42 @@
+<style type="text/css">
+
+
+    .badge-danger {
+      background-color: #d43f3a;
+    }
+
+    .badge-success {
+      background-color: #18842a;
+    }
+
+
+
+</style>
+
+
+<div class="panel panel-default">
+    <div class="panel-heading">Keywords</div>
+    <div class="panel-body">
+        <div class="bs-example">
+            {% for keyword in keywords %}
+                <div class="dropdown">
+                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+
+                            {% if keyword[0] in album.tags_include %}
+                               <span id="{{ keyword[0] }}" include  class="badge badge-success">{{ keyword[0] }}</span>
+                            {% elif  keyword[0] in album.tags_exclude%}
+                               <span id="{{ keyword[0] }}" exclude  class="badge badge-danger">{{ keyword[0] }}</span>
+                            {% else %}
+                               <span id="{{ keyword[0] }}" class="badge">{{ keyword[0] }}</span>
+                            {% endif %}
+
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="include-keyword">Include</a></li>
+                        <li><a class="exclude-keyword">Exclude</a></li>
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
