@@ -8,6 +8,8 @@ class Album():
     def __init__(self, album_id=None):
         self.tags_include = []
         self.tags_exclude = []
+        self.selected = []
+        self.selected_only = None
         self.name = ""
         self.id = album_id
         self.image_count = ""
@@ -16,8 +18,10 @@ class Album():
         self._paginator = None
         self._position = 0
 
+
         if album_id:
             self._get_collection()
+
 
 
     @property
@@ -68,11 +72,13 @@ class Album():
                 self.name = record["name"]
                 self.tags_exclude = record["tags_exclude"]
                 self.tags_include = record["tags_include"]
-
+                self.selected_only = record["selected_only"]
+                self.selected = record["selected"]
                 self._get_images()
 
     def _get_images(self):
         self.image_collection = get_images_in_album(self)
+
 
     def save(self):
         save_album(self)

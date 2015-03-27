@@ -1,11 +1,11 @@
 from app import app
 
-from app.model.mongo_db import get_image, save_image, get_albums, get_keywords
+from app.model.mongo_db import get_image, save_image, get_albums, get_keywords, delete_album
 from app.model import *
 
 from app.model.album import Album
 from app.model.image import image
-from flask import request,  url_for, send_file, jsonify, render_template, g
+from flask import request,  url_for, send_file, jsonify, render_template, g, session
 
 @app.route('/')
 @app.route('/home')
@@ -34,20 +34,27 @@ def showlarge(size, id):
     return render_template('showlarge.html', back_url=request.referrer, size=size, img=im)
 
 
-
+@app.route('/image/album/new', defaults={'album_id': False, 'page': 1}, methods=['GET', 'POST'])
 @app.route('/image/album/<album_id>', defaults={'page': 1}, methods=['GET', 'POST'])
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
 
+    if not album_id:
+        alb = Album()
+        alb.name = "__temp__"
+        alb.save()
+        if "temp_album" in session:
+            if session["temp_album"] != alb.id:
+                delete_album(session["temp_album"], {'name':'__temp__'})
+        session["temp_album"] = alb.id
 
-    alb = Album(album_id)
-    perPage = 20
+    else:
+        alb = Album(album_id)
+    perPage = 24
     pagination = common.pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
 
     return render_template('image_viewer/images.html',paginator=pagination,album = alb, keywords=get_keywords())
-
-
 
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
 def album_save(album_id):
@@ -59,10 +66,10 @@ def album_save(album_id):
         alb.name = form_data['name']
         alb.tags_include = form_data['included']
         alb.tags_exclude = form_data['excluded']
+        alb.selected = form_data['selected']
+        alb.selected_only = form_data['selected_only']
         alb.save()
     return jsonify({'status':'ok'})
-
-
 
 @app.route('/album/list', defaults={'page': 1})
 @app.route('/album/list/page/<int:page>')
@@ -85,9 +92,3 @@ def url_for_other_page(page):
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
 
 
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()

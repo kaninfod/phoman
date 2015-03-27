@@ -52,20 +52,26 @@ def get_images(query=None):
 
 def get_images_in_album(album):
         query_string = {}
-        if album.tags_exclude or album.tags_include:
+        list_of_ids = []
+
+        if album.tags_exclude or album.tags_include and not album.selected_only:
             query_string.update({
                 '$and':[
                     {'db_tags':{'$in':album.tags_include}},
                     {'db_tags':{'$nin':album.tags_exclude}}
                 ]})
 
-        cursor = imagesDB.find(query_string, {"_id":1} )
-        list_of_ids = [str(record['_id']) for record in cursor]
+            cursor = imagesDB.find(query_string, {"_id":1} )
+            list_of_ids = [str(record['_id']) for record in cursor]
+        elif not album.selected_only:
+            cursor = imagesDB.find({}, {"_id":1} )
+            list_of_ids = [str(record['_id']) for record in cursor]
+        elif album.selected_only:
+            list_of_ids = album.selected
 
         album.image_count = len(list_of_ids)
 
-
-        albumsDB.update({"_id": album.id}, {"$set": {"imagecount": album.image_count}}, upsert=False)
+        albumsDB.update({"_id": album.id}, {"$set": {"image_count": album.image_count}}, upsert=False)
         return list_of_ids
 
 def save_album(album):
@@ -73,7 +79,9 @@ def save_album(album):
             'tags_exclude': album.tags_exclude,
             'tags_include': album.tags_include,
             'image_count': album.image_count,
-            'name': album.name
+            'name': album.name,
+            'selected': album.selected,
+            'selected_only': album.selected_only
         }
 
         if album.id:
@@ -90,4 +98,6 @@ def get_albums():
     return albumsDB.find()
 
 
-
+def delete_album(album_id, query):
+    query.update({"_id":ObjectId(album_id)})
+    r = albumsDB.remove(query)

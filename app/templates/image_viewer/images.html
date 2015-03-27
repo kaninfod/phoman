@@ -1,20 +1,24 @@
+{% extends "layout.html" %}
 
-{% if not ajax %}
-    {% extends "layout.html" %}
-{% endif %}
 {% import 'paginator_macro.html' as paginatorx %}
 
 {% block content %}
 
-<div class="col-lg-3">
+
+<link rel="stylesheet" href="/static/css/images.css">
+
+<div id="side-panel">
     {% include 'image_viewer/keyword_panel.html' %}
 </div>
 
-<div id="image-list" class="col-lg-9">
-    {% include 'image_viewer/image_grid.html' %}
-    {{ paginatorx.render_pagination(paginator) }}
-</div>
+<div id="center-panel" class="container-fluid">
 
+    <div id="image-list" class="col-lg-12">
+        {% include 'image_viewer/image_grid.html' %}
+        {{ paginatorx.render_pagination(paginator) }}
+    </div>
+
+</div>
 <div id="mymodal" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -37,6 +41,17 @@
 </div><!-- /.modal -->
 
 
-<script src="/static/js/images.js"></script>
+<script>
+$(document).ready(function() {
+    if (sessionStorage["album_id"] !== "{{ album.id }}") {
+        sessionStorage["selected_images"] = [];
+    }
+    sessionStorage["album_id"] = "{{ album.id }}";
+})
+</script>
+<script src="/static/js/images.js">
+
+</script>
+
 
 {% endblock %}

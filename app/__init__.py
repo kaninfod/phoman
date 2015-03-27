@@ -21,7 +21,7 @@ app.config["LOOKUP_LOCATION"] = True
 #app.config["IMAGE_THUMBS"] = "/home/martin/Pictures/thumbs/"
 
 
-app.config["IMAGE_THUMB"] = (256, 256)
+app.config["IMAGE_THUMB"] = (125,125)
 app.config["IMAGE_MEDIUM"] = (600, 800)
 app.config["IMAGE_LARGE"] = (1024, 1200)
 
