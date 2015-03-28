@@ -33,9 +33,9 @@ def get_image(id):
 
 def get_keywords():
     keywords = imagesDB.distinct('db_tags')
-    keyword_list = [([x, y]) for x, y in zip(keywords, keywords)]
 
-    return keyword_list
+
+    return keywords
 
 
 def locate_image(field, value):
@@ -57,8 +57,8 @@ def get_images_in_album(album):
         if album.tags_exclude or album.tags_include and not album.selected_only:
             query_string.update({
                 '$and':[
-                    {'db_tags':{'$in':album.tags_include}},
-                    {'db_tags':{'$nin':album.tags_exclude}}
+                    {'db_tags.value':{'$in':album.tags_include}},
+                    {'db_tags.value':{'$nin':album.tags_exclude}}
                 ]})
 
             cursor = imagesDB.find(query_string, {"_id":1} )

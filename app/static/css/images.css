@@ -1,4 +1,3 @@
-
 .thumbnail {
     margin-bottom: 0px;
     border: none;
@@ -42,6 +41,14 @@
     color: #55eb2d;
 }
 
+.badge-danger {
+  background-color: #d43f3a;
+}
+
+.badge-success {
+  background-color: #18842a;
+}
+
 body {
     padding-bottom: 40px;
     padding-top: 60px;
@@ -50,3 +57,4 @@ body {
 .sidebar-nav-fixed {
 	width:20%;
 }
+

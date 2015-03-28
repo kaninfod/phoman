@@ -1,34 +1,17 @@
-<style type="text/css">
 
-
-    .badge-danger {
-      background-color: #d43f3a;
-    }
-
-    .badge-success {
-      background-color: #18842a;
-    }
-
-
-
-</style>
 <div class="sidebar-nav-fixed pull-right affix">
-                <div class="well">
-
-
+    <div class="well">
         <div class="bs-example">
             {% for keyword in keywords %}
                 <div class="dropdown">
                     <a href="#" data-toggle="dropdown" class="dropdown-toggle">
-
-                            {% if keyword[0] in album.tags_include %}
-                               <span id="{{ keyword[0] }}" include  class="badge badge-success">{{ keyword[0] }}</span>
-                            {% elif  keyword[0] in album.tags_exclude%}
-                               <span id="{{ keyword[0] }}" exclude  class="badge badge-danger">{{ keyword[0] }}</span>
+                            {% if keyword['value'] in album.tags_include %}
+                               <span id="{{ keyword['value'] }}" include  class="badge badge-success">{{ keyword['value'] }}</span>
+                            {% elif  keyword['value'] in album.tags_exclude%}
+                               <span id="{{ keyword['value'] }}" exclude  class="badge badge-danger">{{ keyword['value'] }}</span>
                             {% else %}
-                               <span id="{{ keyword[0] }}" class="badge">{{ keyword[0] }}</span>
+                               <span id="{{ keyword['value'] }}" class="badge">{{ keyword['value'] }}</span>
                             {% endif %}
-
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="include-keyword">Include</a></li>
@@ -36,5 +19,6 @@
                     </ul>
                 </div>
             {% endfor %}
-</div>
+        </div>
+    </div>
 </div>
