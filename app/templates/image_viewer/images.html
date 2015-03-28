@@ -7,18 +7,26 @@
 
 <link rel="stylesheet" href="/static/css/images.css">
 
-<div id="side-panel">
-    {% include 'image_viewer/keyword_panel.html' %}
-</div>
+<div class="container">
+    <div class="row">
 
-<div id="center-panel" class="container-fluid">
 
-    <div id="image-list" class="col-lg-12">
-        {% include 'image_viewer/image_grid.html' %}
-        {{ paginatorx.render_pagination(paginator) }}
+
+        <div id="image-list" class="col-md-11">
+            {% include 'image_viewer/image_grid.html' %}
+            {{ paginatorx.render_pagination(paginator) }}
+        </div>
+
+
+        <div class="col-md-1">
+            {% include 'image_viewer/keyword_panel.html' %}#}
+        </div>
+
     </div>
 
 </div>
+
+
 <div id="mymodal" class="modal fade">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -41,6 +49,8 @@
 </div><!-- /.modal -->
 
 
+
+
 <script>
 $(document).ready(function() {
     if (sessionStorage["album_id"] !== "{{ album.id }}") {
@@ -49,9 +59,7 @@ $(document).ready(function() {
     sessionStorage["album_id"] = "{{ album.id }}";
 })
 </script>
-<script src="/static/js/images.js">
-
-</script>
+<script src="/static/js/images.js"></script>
 
 
 {% endblock %}
