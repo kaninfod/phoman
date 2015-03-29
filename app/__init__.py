@@ -1,14 +1,12 @@
 __author__ = 'martin'
 from flask import Flask
 import logging
-from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = 'ldjnfieveioecoecococeockeock'
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-db = SQLAlchemy(app)
+
 
 
 # Mac
