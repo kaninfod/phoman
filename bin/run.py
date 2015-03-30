@@ -2,11 +2,6 @@
 from app import app
 import optparse
 
-#SERVER_NAME = "127.0.0.1"
-#SERVER_PORT = 5000
-#app.debug = False
-#app.run(SERVER_NAME, SERVER_PORT, threaded=True)
-
 
 
 __port = 701
@@ -26,7 +21,7 @@ def tornado(option, opt_str, value, parser):
 
 def builtin(option, opt_str, value, parser):
     print('Built-in development server on port {port}...'.format(port=getPort(value)))
-    app.run(host="127.0.0.1",port=getPort(value),debug=True)
+    app.run(host="localhost",port=getPort(value),debug=True)
 
 
 def main():

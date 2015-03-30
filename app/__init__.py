@@ -29,7 +29,7 @@ app.config["IMAGE_LARGE"] = (1024, 1200)
 
 app.config['DEBUG'] = True
 
-filehandler = logging.FileHandler('log/phoman.log')
+filehandler = logging.FileHandler('/Users/hingem/PycharmProjects/phoman/log/phoman.log')
 filehandler.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 consolehandler = logging.StreamHandler()

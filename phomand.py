@@ -5,21 +5,29 @@ __author__ = 'hingem'
 
 import sys, time
 from bin.daemon import Daemon
+from app import app
 
 class MyDaemon(Daemon):
     def run(self):
-        while True:
-            time.sleep(1)
+        app.logger.debug("Starting torna")
+        print('Tornado on port {port}...'.format(port=5000))
+        from tornado.wsgi import WSGIContainer
+        from tornado.httpserver import HTTPServer
+        from tornado.ioloop import IOLoop
+
+        http_server = HTTPServer(WSGIContainer(app))
+        http_server.listen(5000)
+        IOLoop.instance().start()
 
 if __name__ == "__main__":
     daemon = MyDaemon('/tmp/phomand.pid')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
-            Daemon.start()
+            daemon.start()
         elif 'stop' == sys.argv[1]:
-            Daemon.stop()
+            daemon.stop()
         elif 'restart' == sys.argv[1]:
-            Daemon.restart()
+            daemon.restart()
         else:
             print("Unknown command")
             sys.exit(2)
