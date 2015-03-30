@@ -9,14 +9,14 @@ from app import app
 
 class MyDaemon(Daemon):
     def run(self):
-        app.logger.debug("Starting torna")
-        print('Tornado on port {port}...'.format(port=5000))
+        app.logger.debug("Starting Tornado...")
+        print('Tornado on port {port}...'.format(port=app.config['SERVER_PORT']))
         from tornado.wsgi import WSGIContainer
         from tornado.httpserver import HTTPServer
         from tornado.ioloop import IOLoop
 
         http_server = HTTPServer(WSGIContainer(app))
-        http_server.listen(5000)
+        http_server.listen(app.config['SERVER_PORT'])
         IOLoop.instance().start()
 
 if __name__ == "__main__":

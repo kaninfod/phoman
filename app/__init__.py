@@ -3,33 +3,10 @@ from flask import Flask
 import logging
 
 app = Flask(__name__)
-app.secret_key = 'ldjnfieveioecoecococeockeock'
+app.config.from_pyfile('../phoman.conf')
 
 
-
-
-
-# Mac
-app.config['IMAGE_STORE'] = "/Users/hingem/my_image_store/"
-app.config["IMAGE_THUMBS"] = "/Users/hingem/thumbs/"
-app.config["LOOKUP_LOCATION"] = True
-
-#asus
-#app.config['IMAGE_STORE'] = "/home/martin/Pictures/000 Master - Auto Backup/2014 - copied across"
-#app.config["IMAGE_THUMBS"] = "/home/martin/Pictures/thumbs/"
-
-
-app.config["IMAGE_THUMB"] = (125,125)
-app.config["IMAGE_MEDIUM"] = (600, 800)
-app.config["IMAGE_LARGE"] = (1024, 1200)
-
-
-
-
-
-app.config['DEBUG'] = True
-
-filehandler = logging.FileHandler('/Users/hingem/PycharmProjects/phoman/log/phoman.log')
+filehandler = logging.FileHandler(app.config["LOG_PATH"])
 filehandler.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 consolehandler = logging.StreamHandler()
