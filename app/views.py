@@ -39,10 +39,6 @@ def showlarge(size, id):
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
 
-
-
-
-
     if not album_id:
         alb = Album()
         alb.name = "__temp__"
@@ -68,16 +64,16 @@ def images(album_id, page):
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
 def album_save(album_id):
 
-    alb = Album(album_id)
+    album = Album(album_id)
 
     form_data = request.get_json()
     if form_data:
-        alb.name = form_data['name']
-        alb.tags_include = form_data['included']
-        alb.tags_exclude = form_data['excluded']
-        alb.selected = form_data['selected']
-        alb.selected_only = form_data['selected_only']
-        alb.save()
+        album.name = form_data['name']
+        album.tags_include = form_data['included']
+        album.tags_exclude = form_data['excluded']
+        album.selected = form_data['selected']
+        album.selected_only = form_data['selected_only']
+        album.save()
     return jsonify({'status':'ok'})
 
 @app.route('/album/list', defaults={'page': 1})

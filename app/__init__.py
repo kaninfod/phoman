@@ -29,11 +29,11 @@ app.config["IMAGE_LARGE"] = (1024, 1200)
 
 app.config['DEBUG'] = True
 
-filehandler = logging.FileHandler('phoman.log')
+filehandler = logging.FileHandler('log/phoman.log')
 filehandler.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 consolehandler = logging.StreamHandler()
-consolehandler.setLevel(logging.ERROR)
+consolehandler.setLevel(logging.DEBUG)
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 filehandler.setFormatter(formatter)

@@ -73,43 +73,47 @@ class image():
 
 
     def _image_from_file(self, file):
+        try:
+            image = Image.open(file, 'r')
+            self.exif = get_exif_data(image)
 
-        image = Image.open(file, 'r')
-        self.exif = get_exif_data(image)
+            if self.exif is None:
+                self.db_has_exif = False
+                self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
+            else:
 
-        if self.exif is None:
-            self.db_has_exif = False
-            self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
-        else:
+                if "ImageUniqueID" in self.exif:
+                    record = locate_image("db_ImageUniqueID", self.db_ImageUniqueID)
+                    if record:
+                        self.db_country = record["db_country"]
+                        self.db_state = record["db_state"]
+                        self.db_road = record["db_road"]
+                        self.db_address = record["db_address"]
+                        self.db_location = record["db_location"]
 
-            if "ImageUniqueID" in self.exif:
-                record = locate_image("db_ImageUniqueID", self.db_ImageUniqueID)
-                if record:
-                    self.db_country = record["db_country"]
-                    self.db_state = record["db_state"]
-                    self.db_road = record["db_road"]
-                    self.db_address = record["db_address"]
-                    self.db_location = record["db_location"]
-
-            if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
                 if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
-                    self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
+                    if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
+                        self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
 
-            self.db_has_exif = True
-            self.add_exif_data("Make", "db_make")
-            self.add_exif_data("Model", "db_model")
-            self.add_exif_data("ImageUniqueID", "db_ImageUniqueID")
-            self.add_exif_data("ExifImageHeight", "db_original_height")
-            self.add_exif_data("ExifImageWidth", "db_original_width")
-            self.add_exif_data("Orientation", "db_orientation")
-            self.add_exif_data("Flash", "db_flash_fired")
-            self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
+                self.db_has_exif = True
+                self.add_exif_data("Make", "db_make")
+                self.add_exif_data("Model", "db_model")
+                self.add_exif_data("ImageUniqueID", "db_ImageUniqueID")
+                self.add_exif_data("ExifImageHeight", "db_original_height")
+                self.add_exif_data("ExifImageWidth", "db_original_width")
+                self.add_exif_data("Orientation", "db_orientation")
+                self.add_exif_data("Flash", "db_flash_fired")
+                self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
 
 
-        self._generate_files(file)
-        self.set_tags()
-        self.__mongo_save__()
+            self._generate_files(file)
+            self.set_tags()
+            self.__mongo_save__()
+        except OSError as e:
+            app.logger.debug("The file %s is damaged. Error: %s" % (file, e))
 
+        except Exception as e:
+            app.logger.debug("An error occured while indexing %s. Error: %s" % (file, e))
 
     def set_tags(self):
 
