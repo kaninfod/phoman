@@ -1,8 +1,24 @@
-
 <div class="sidebar-nav-fixed pull-right affix">
-    <div class="well">
-        <div class="bs-example">
-            {% for keyword in keywords %}
+
+
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+{% for category in categories %}
+
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="heading{{ category }}">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ category }}" aria-expanded="true" aria-controls="collapse{{ category }}">
+          {{ category }}
+        </a>
+      </h4>
+    </div>
+    <div id="collapse{{ category }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ category }}">
+      <div class="panel-body">
+
+
+        {% for keyword in keywords %}
+            {% if keyword['category'] == category %}
                 <div class="dropdown">
                     <a href="#" data-toggle="dropdown" class="dropdown-toggle">
                             {% if keyword['value'] in album.tags_include %}
@@ -18,7 +34,18 @@
                         <li><a class="exclude-keyword">Exclude</a></li>
                     </ul>
                 </div>
-            {% endfor %}
-        </div>
+            {% endif %}
+        {% endfor %}
+
+
+      </div>
     </div>
+  </div>
+
+{% endfor %}
+
 </div>
+
+</div>
+
+

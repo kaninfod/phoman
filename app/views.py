@@ -1,6 +1,6 @@
 from app import app
 
-from app.model.mongo_db import get_image, save_image, get_albums, get_keywords, delete_album
+from app.model.mongo_db import get_image, save_image, get_albums, get_keywords, delete_album, get_keyword_categories
 from app.model import *
 
 from app.model.album import Album
@@ -39,6 +39,10 @@ def showlarge(size, id):
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
 
+
+
+
+
     if not album_id:
         alb = Album()
         alb.name = "__temp__"
@@ -54,7 +58,12 @@ def images(album_id, page):
     pagination = common.pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
 
-    return render_template('image_viewer/images.html',paginator=pagination,album = alb, keywords=get_keywords())
+    return render_template('image_viewer/images.html',
+                           paginator=pagination,
+                           album = alb,
+                           keywords=get_keywords(),
+                           categories=get_keyword_categories()
+                           )
 
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
 def album_save(album_id):

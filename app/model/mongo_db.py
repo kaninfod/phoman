@@ -33,9 +33,13 @@ def get_image(id):
 
 def get_keywords():
     keywords = imagesDB.distinct('db_tags')
-
-
     return keywords
+
+def get_keyword_categories():
+    keywords = imagesDB.distinct('db_tags.category')
+    return keywords
+
+
 
 
 def locate_image(field, value):

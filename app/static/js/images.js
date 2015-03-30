@@ -90,7 +90,7 @@ $(document).ready(function() {
     })
 
     function get_included_keywords() {
-        outer_div = $(".bs-example");
+        outer_div = $("#accordion");
 
         var included = [];
         outer_div.find('[include]').each(function(i) {
