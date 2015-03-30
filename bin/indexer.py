@@ -14,7 +14,9 @@ file_store = app.config['IMAGE_STORE']
 
 def scan_files():
     hourly_scan = r"""find '""" + file_store + r"""' -newermt $(date +%Y-%m-%d -d '1 year ago') -type f -print > """ + file_list
+    app.logger.debug("before")
     os.system(hourly_scan)
+    app.logger.debug("after")
     with open(file_list) as f:
         for file_path in f:
             file_path = file_path.strip("\n")
