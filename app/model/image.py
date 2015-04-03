@@ -1,17 +1,9 @@
-import os
-import errno
-
-import datetime
-
-
-from PIL import Image, ImageOps
-from app import *
-from app.model.exif_data_handler import get_exif_data, get_lat_lon, lookup_location
-from app.model.mongo_db import get_image, save_image, locate_image
+from app.model.mongo_db import get_image_from_id, save_image
 
 
 class image():
     db_filename = None
+    db_original_subpath = None
     db_original_path = None
     db_large_path = None
     db_medium_path = None
@@ -35,6 +27,9 @@ class image():
     db_state = None
     db_address = None
     db_road = None
+    db_image_hash = None
+    db_extension = None
+    db_links = {}
 
 
     def __mongo_attributes__(self):
@@ -60,66 +55,31 @@ class image():
         self.db_tags = []
 
         if image_id:
-            self.__mongo_populate__(get_image(image_id))
+            self.__mongo_populate__(get_image_from_id(image_id))
 
         else:
             if isinstance(image_source, str):
-                self._image_from_file(image_source)
-                print()
+                return
+                #self._image_from_file(image_source)
+
             elif isinstance(image_source, dict):
                 self.__mongo_populate__(image_source)
-                if update_location:
-                    lookup_location(self)
+                #if update_location:
+                #    lookup_location(self)
 
+    def add_link(self, ref, type):
+        self.db_links.update(
+            {
+                "ref": ref,
+                "type": type
+            }
 
-    def _image_from_file(self, file):
-        try:
-            image = Image.open(file, 'r')
-            self.exif = get_exif_data(image)
+        )
 
-            if self.exif is None:
-                self.db_has_exif = False
-                self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
-            else:
-
-                if "ImageUniqueID" in self.exif:
-                    record = locate_image("db_ImageUniqueID", self.db_ImageUniqueID)
-                    if record:
-                        self.db_country = record["db_country"]
-                        self.db_state = record["db_state"]
-                        self.db_road = record["db_road"]
-                        self.db_address = record["db_address"]
-                        self.db_location = record["db_location"]
-
-                if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
-                    if not self.add_exif_data("DateTimeOriginal", "db_date_taken"):
-                        self.db_date_taken = datetime.datetime(1972, 6, 24, 0)
-
-                self.db_has_exif = True
-                self.add_exif_data("Make", "db_make")
-                self.add_exif_data("Model", "db_model")
-                self.add_exif_data("ImageUniqueID", "db_ImageUniqueID")
-                self.add_exif_data("ExifImageHeight", "db_original_height")
-                self.add_exif_data("ExifImageWidth", "db_original_width")
-                self.add_exif_data("Orientation", "db_orientation")
-                self.add_exif_data("Flash", "db_flash_fired")
-                self.db_latitude, self.db_longitude = get_lat_lon(self.exif)
-
-
-            self._generate_files(file)
-            self.set_tags()
-            self.__mongo_save__()
-        except OSError as e:
-            app.logger.debug("The file %s is damaged. Error: %s" % (file, e))
-
-        except Exception as e:
-            app.logger.debug("An error occured while indexing %s. Error: %s" % (file, e))
 
     def set_tags(self):
 
         self.db_tags = []
-
-
 
         #time tags
         category = "Time"
@@ -165,66 +125,10 @@ class image():
             self.db_tags.append({"category": category, "value":  "No Location"})
 
 
-    def add_exif_data(self, exif_field, mongo_field):
-        date_fields = ["DateTimeOriginal", "DateTime"]
 
-        if exif_field in self.exif:
-            if exif_field in date_fields:
-                date_string = str(self.exif[exif_field])
-                date_format = "%Y:%m:%d %H:%M:%S"
-                date = datetime.datetime.strptime(date_string, date_format)
-                setattr(self, mongo_field, date)
-
-            else:
-                setattr(self, mongo_field, self.exif[exif_field])
-
-            return 1
 
     def __str__(self):
-        return self.db_original_path
+        return self.db_original_subpath
 
-    def _generate_files(self, file):
-        self.db_original_path = file
-        self.db_filename = os.path.split(file)[1]
-        _webimages_path = app.config["IMAGE_THUMBS"] + \
-                          self.db_original_path.replace(app.config["IMAGE_STORE"], "").replace(self.db_filename, "")
-        self._ensure_dir(_webimages_path)
-        fn, ext = os.path.splitext(self.db_filename)
-        self.db_thumb_path = "%s%s_tm%s" % (_webimages_path, fn, ext)
-        self.db_medium_path = "%s%s_md%s" % (_webimages_path, fn, ext)
-        self.db_large_path = "%s%s_lg%s" % (_webimages_path, fn, ext)
-        self._generate_webimages()
-        self.db_size = os.path.getsize(file)
-
-    def _generate_webimages(self):
-        thumb_size = app.config["IMAGE_THUMB"]
-        medium_size = app.config["IMAGE_MEDIUM"]
-        large_size = app.config["IMAGE_LARGE"]
-
-        im = Image.open(self.db_original_path)
-        self.generate_image(im, self.db_medium_path, medium_size)
-        self.generate_thumb(im, self.db_thumb_path, thumb_size)
-
-    def generate_image(self, image, path, size):
-
-        if not os.path.isfile(self.db_medium_path):
-            image.thumbnail(size, Image.ANTIALIAS)
-            image.save(path, "JPEG")
-
-    def generate_thumb(self, image, path, size):
-        if not os.path.isfile(path):
-            thumb = ImageOps.fit(image, size, Image.ANTIALIAS)
-            thumb.save(path, "JPEG")
-
-
-    def _ensure_dir(self, dirname):
-        """
-        Ensure that a named directory exists; if it does not, attempt to create it.
-        """
-        try:
-            os.makedirs(dirname)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
 
 

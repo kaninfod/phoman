@@ -1,6 +1,6 @@
 from app import app
 
-from app.model.mongo_db import get_image, save_image, get_albums, get_keywords, delete_album, get_keyword_categories
+from app.model.mongo_db import get_image_from_id, save_image, get_albums, get_keywords, delete_album, get_keyword_categories
 from app.model import *
 
 from app.model.album import Album
@@ -24,7 +24,7 @@ def imagestore(image_id, size):
         elif size == "large":
             path = im.db_large_path
         elif size == "original":
-            path = im.db_original_path
+            path = im.db_original_subpath
     return send_file(path)
 
 

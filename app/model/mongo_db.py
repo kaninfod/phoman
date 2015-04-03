@@ -26,7 +26,7 @@ def save_image(image):
     image.db_id = str(imagesDB.find(imgobject)[0]["_id"])
 
 
-def get_image(id):
+def get_image_from_id(id):
 
     record = imagesDB.find_one({'_id': ObjectId(id)})
     return record
