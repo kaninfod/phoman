@@ -11,10 +11,12 @@ from app import *
 
 class ImageHelper():
     image = None
+    exif_data = None
 
     def __init__(self, filename=None):
         if filename:
             self.image = Image.open(filename, 'r')
+            self.exif = self.get_exif_data()
 
     def get_exif_data(self):
         """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
@@ -39,7 +41,27 @@ class ImageHelper():
 
         return exif_data
 
-    def add_exif_data(self, img, exif_field, mongo_field):
+    def add_exif_to_image(self, img):
+        if not self.exif is None:
+            self.db_has_exif = True
+            self._add_exif_data(img, "Make", "db_make")
+            self._add_exif_data(img, "Model", "db_model")
+            self._add_exif_data(img, "ImageUniqueID", "db_ImageUniqueID")
+            self._add_exif_data(img, "ExifImageHeight", "db_original_height")
+            self._add_exif_data(img, "ExifImageWidth", "db_original_width")
+            self._add_exif_data(img, "Orientation", "db_orientation")
+            self._add_exif_data(img, "Flash", "db_flash_fired")
+            img.db_latitude, img.db_longitude = self.get_lat_lon(img.exif)
+            if not self._add_exif_data(img, "DateTimeOriginal", "db_date_taken"):
+                if not self._add_exif_data(img, "DateTime", "db_date_taken"):
+                    img.db_date_taken = datetime(1972, 6, 24, 0)
+
+            return True
+        else:
+            img.db_has_exif = False
+            return False
+
+    def _add_exif_data(self, img, exif_field, mongo_field):
         date_fields = ["DateTimeOriginal", "DateTime"]
 
         if exif_field in img.exif:
@@ -132,11 +154,6 @@ class ImageHelper():
                 raise
 
 
-
-
-
-
-
     def _convert_to_degress(self, value):
         """Helper function to convert the GPS coordinates stored in the EXIF to degress in float format"""
         deg_num, deg_denom = value[0]
@@ -156,8 +173,8 @@ class ImageHelper():
         lat = None
         lon = None
 
-        if "GPSInfo" in exif_data:
-            gps_info = exif_data["GPSInfo"]
+        if "GPSInfo" in self.exif:
+            gps_info = self.exif["GPSInfo"]
 
             gps_latitude = gps_info.get("GPSLatitude")
             gps_latitude_ref = gps_info.get('GPSLatitudeRef')
@@ -216,3 +233,5 @@ class ImageHelper():
                     image.db_location = False
         else:
             app.logger.debug("No coordinates or image already located, id: %s" % image.db_id)
+
+

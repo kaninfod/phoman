@@ -1,15 +1,17 @@
 __author__ = 'hingem'
 
-
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from app import app
 
+DB_HOST = app.config["DB_HOST"]
+DB_PORT = app.config["DB_PORT"]
+DB_NAME = app.config["DB_NAME"]
 
+client = MongoClient(DB_HOST, DB_PORT)
+db = client[DB_NAME]
 
-client = MongoClient('localhost', 27017)
-db = client['phoman3']
 imagesDB = db['images']
-collectionsDB = db['collections']
 albumsDB = db['albums']
 
 
@@ -52,7 +54,6 @@ def get_images(query=None):
 
     records = imagesDB.find(query)
     return records
-
 
 def get_images_in_album(album):
         query_string = {}
