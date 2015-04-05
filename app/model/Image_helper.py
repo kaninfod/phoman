@@ -15,13 +15,13 @@ class ImageHelper():
 
     def __init__(self, filename=None):
         if filename:
+
             self.image = Image.open(filename, 'r')
             self.exif = self.get_exif_data()
 
     def get_exif_data(self):
         """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
 
-        #image = Image.open(file, 'r')
         info = self.image._getexif()
         if info is None:
             return None
@@ -42,8 +42,9 @@ class ImageHelper():
         return exif_data
 
     def add_exif_to_image(self, img):
+
         if not self.exif is None:
-            self.db_has_exif = True
+            img.db_has_exif = True
             self._add_exif_data(img, "Make", "db_make")
             self._add_exif_data(img, "Model", "db_model")
             self._add_exif_data(img, "ImageUniqueID", "db_ImageUniqueID")
@@ -51,34 +52,43 @@ class ImageHelper():
             self._add_exif_data(img, "ExifImageWidth", "db_original_width")
             self._add_exif_data(img, "Orientation", "db_orientation")
             self._add_exif_data(img, "Flash", "db_flash_fired")
-            img.db_latitude, img.db_longitude = self.get_lat_lon(img.exif)
-            if not self._add_exif_data(img, "DateTimeOriginal", "db_date_taken"):
-                if not self._add_exif_data(img, "DateTime", "db_date_taken"):
-                    img.db_date_taken = datetime(1972, 6, 24, 0)
 
+            img.db_latitude, img.db_longitude = self.get_lat_lon(img.exif)
+            if not img.db_latitude or not img.db_longitude:
+                img.db_location = -2
+            else:
+                img.db_location = 0
+
+            exif_date_fields = ["DateTimeOriginal", "DateTime"]
+            for date_field in exif_date_fields:
+                if date_field in img.exif:
+                    date_string = str(img.exif[date_field])
+                    date_format = "%Y:%m:%d %H:%M:%S"
+                    date = datetime.strptime(date_string, date_format)
+                    setattr(img, "db_date_taken", date)
+                    break
             return True
         else:
             img.db_has_exif = False
             return False
 
     def _add_exif_data(self, img, exif_field, mongo_field):
-        date_fields = ["DateTimeOriginal", "DateTime"]
+        #date_fields = ["DateTimeOriginal", "DateTime"]
 
         if exif_field in img.exif:
-            if exif_field in date_fields:
-                date_string = str(img.exif[exif_field])
-                date_format = "%Y:%m:%d %H:%M:%S"
-                date = datetime.strptime(date_string, date_format)
-                setattr(img, mongo_field, date)
-
-            else:
-                setattr(img, mongo_field, img.exif[exif_field])
+            # if exif_field in date_fields:
+            #     date_string = str(img.exif[exif_field])
+            #     date_format = "%Y:%m:%d %H:%M:%S"
+            #     date = datetime.strptime(date_string, date_format)
+            #     setattr(img, mongo_field, date)
+            #
+            # else:
+            setattr(img, mongo_field, img.exif[exif_field])
 
             return 1
 
     def get_image_hash(self):
         try:
-
             m = hashlib.md5()
             da = self.image.tostring()
             m.update(da)
@@ -110,8 +120,6 @@ class ImageHelper():
 
     def generate_files(self, dest_path, filename, ext):
         src_path = os.path.join(dest_path, filename) + ext
-
-        #dest_path = dest_path.replace(app.config["IMAGE_STORE"], app.config["IMAGE_THUMBS"])
         self.ensure_dirs_exist(dest_path)
         paths = []
 
@@ -193,9 +201,16 @@ class ImageHelper():
         return lat, lon
 
 
-    def lookup_location(image):
+    def lookup_location(self, image):
+        # Image location statuses:
+        #   -2 : no gps data available
+        #   -1 : gps data available but lookup unsuccessful
+        #   0  : gps data available but no lookup attempted
+        #   1  : gps data available and lookup successful
+
+
         # app.logger.name = "lookup location"
-        if not image.db_location and image.db_latitude and image.db_longitude:
+        if not image.db_location == -2:
 
             #geolocator = GoogleV3("AIzaSyCGSMJfmJI91d8S6q-LK-rSXO-HpJdZjQQ")
             geolocator = Nominatim(timeout=4)
@@ -206,32 +221,41 @@ class ImageHelper():
                 location = geolocator.reverse(point)
             except GeocoderTimedOut as e:
                 app.logger.warning(e)
+                image.db_location = -1
+                return -1
             except Exception as e:
                 app.logger.warning(e)
-            else:
-                if image.db_longitude and image.db_latitude:
-                    if "error" in location.raw:
-                        app.logger.warning(location.raw["error"])
-                    elif "address" in location.raw:
-                        if "country" in location.raw["address"]:
-                            image.db_country = location.raw["address"]['country']
-                            app.logger.debug("success getting country")
-                        if "state" in location.raw["address"]:
-                            image.db_state = location.raw["address"]['state']
-                            app.logger.debug("success getting state")
-                        if "road" in location.raw["address"]:
-                            image.db_road = location.raw["address"]['road']
-                            app.logger.debug("success getting road")
+                image.db_location = -1
+                return -1
+            finally:
 
-                        image.db_address = location.raw['display_name']
+                if "error" in location.raw:
+                    app.logger.warning(location.raw["error"])
+                    image.db_location = -1
+                    return -1
+                elif "address" in location.raw:
+                    if "country" in location.raw["address"]:
+                        image.db_country = location.raw["address"]['country']
+                        app.logger.debug("success getting country")
+                    if "state" in location.raw["address"]:
+                        image.db_state = location.raw["address"]['state']
+                        app.logger.debug("success getting state")
+                    if "road" in location.raw["address"]:
+                        image.db_road = location.raw["address"]['road']
+                        app.logger.debug("success getting road")
 
-                        image.db_location = True
-                        app.logger.info("success getting one or more location entities")
-                    else:
-                        app.logger.info("no location returned")
+                    image.db_address = location.raw['display_name']
+
+                    image.db_location = True
+                    app.logger.info("success getting one or more location entities")
+                    image.db_location = 1
+                    return 1
                 else:
-                    image.db_location = False
+                    app.logger.info("no location returned")
+                    image.db_location = -1
+                    return -1
+
         else:
-            app.logger.debug("No coordinates or image already located, id: %s" % image.db_id)
+            app.logger.debug("No coordinates, id: %s" % image.db_id)
 
 

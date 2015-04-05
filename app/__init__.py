@@ -7,10 +7,10 @@ app.config.from_pyfile('../phoman.conf')
 
 
 filehandler = logging.FileHandler(app.config["LOG_PATH"])
-filehandler.setLevel(logging.DEBUG)
+filehandler.setLevel(app.config["LOG_LEVEL"])
 # create console handler with a higher log level
 consolehandler = logging.StreamHandler()
-consolehandler.setLevel(logging.DEBUG)
+consolehandler.setLevel(app.config["LOG_LEVEL"])
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 filehandler.setFormatter(formatter)

@@ -50,9 +50,13 @@ def locate_image(field, value):
     return record
 
 
-def get_images(query=None):
+def get_images(query=None, sort_by=None, sort_direction=None):
 
-    records = imagesDB.find(query)
+    if sort_by:
+        records = imagesDB.find(query, {"db_date_taken":1}).sort(sort_by,1)
+    else:
+        records = imagesDB.find(query)
+
     return records
 
 def get_images_in_album(album):

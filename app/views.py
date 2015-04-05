@@ -5,7 +5,7 @@ from app.model import *
 
 from app.model.album import Album
 from app.model.image import image
-from flask import request,  url_for, send_file, jsonify, render_template, g, session
+from flask import request,  url_for, send_file, jsonify, render_template, g, session, redirect
 
 @app.route('/')
 @app.route('/home')
@@ -47,7 +47,7 @@ def images(album_id, page):
             if session["temp_album"] != alb.id:
                 delete_album(session["temp_album"], {'name':'__temp__'})
         session["temp_album"] = alb.id
-
+        return redirect("/image/album/" + alb.id)
     else:
         alb = Album(album_id)
     perPage = 24
