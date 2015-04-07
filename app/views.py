@@ -1,11 +1,15 @@
 from app import app
 
-from app.model.mongo_db import get_image_from_id, save_image, get_albums, get_keywords, delete_album, get_keyword_categories
+#from app.model.mongo_db import get_image_from_id, save_image, get_albums, get_keywords, delete_album, get_keyword_categories
+from app.model.database import Database
 from app.model import *
 
 from app.model.album import Album
 from app.model.image import image
 from flask import request,  url_for, send_file, jsonify, render_template, g, session, redirect
+
+db = Database()
+
 
 @app.route('/')
 @app.route('/home')
@@ -18,13 +22,13 @@ def imagestore(image_id, size):
     im = image(image_id=image_id)
     if im:
         if size == "thumb":
-            path = im.db_thumb_path
+            path = im.thumb_path
         elif size == "medium":
-            path = im.db_medium_path
+            path = im.medium_path
         elif size == "large":
-            path = im.db_large_path
+            path = im.large_path
         elif size == "original":
-            path = im.db_original_subpath
+            path = im.original_subpath
     return send_file(path)
 
 
@@ -45,7 +49,7 @@ def images(album_id, page):
         alb.save()
         if "temp_album" in session:
             if session["temp_album"] != alb.id:
-                delete_album(session["temp_album"], {'name':'__temp__'})
+                db.delete_album(session["temp_album"], {'name':'__temp__'})
         session["temp_album"] = alb.id
         return redirect("/image/album/" + alb.id)
     else:
@@ -57,8 +61,8 @@ def images(album_id, page):
     return render_template('image_viewer/images.html',
                            paginator=pagination,
                            album = alb,
-                           keywords=get_keywords(),
-                           categories=get_keyword_categories()
+                           keywords=db.get_keywords(),
+                           categories=db.get_keyword_categories()
                            )
 
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
@@ -80,7 +84,7 @@ def album_save(album_id):
 @app.route('/album/list/page/<int:page>')
 def collection(page):
     perPage = 10
-    data = get_albums()
+    data = db.get_albums()
     pagination = common.pagination(page, perPage, data.count())
     data = data[pagination.min_rec:pagination.max_rec]
 

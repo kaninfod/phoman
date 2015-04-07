@@ -2,22 +2,26 @@ __author__ = 'martin'
 
 
 from app.model.image import image
-from app.model.mongo_db import save_album, get_album, get_images_in_album
+#from app.model.mongo_db import save_album, get_album, get_images_in_album
+from app.model.database import Database
 
 class Album():
     def __init__(self, album_id=None):
         self.tags_include = []
         self.tags_exclude = []
         self.selected = []
+        self.startdate = None
+        self.enddate = None
         self.selected_only = None
         self.name = ""
+        self.type = {}
         self.id = album_id
         self.image_count = ""
 
         self.image_collection = []
         self._paginator = None
         self._position = 0
-
+        self.db = Database()
 
         if album_id:
             self._get_collection()
@@ -43,7 +47,6 @@ class Album():
             self._position += 1
             if self._paginator:
                 if self._position - 1 < self.paginator.max_rec:
-
                     return image(image_id=self.image_collection[self._position-1])
                 else:
                     raise StopIteration()
@@ -66,20 +69,23 @@ class Album():
 
     def _get_collection(self):
         if self.id:
-            record = get_album(self.id)
+            record = self.db.get_album(self.id)
             if record:
                 self.id = record["_id"]
                 self.name = record["name"]
                 self.tags_exclude = record["tags_exclude"]
                 self.tags_include = record["tags_include"]
+                self.startdate = record["startdate"]
+                self.enddate = record["enddate"]
                 self.selected_only = record["selected_only"]
                 self.selected = record["selected"]
+                self.type = record["type"]
                 self._get_images()
 
     def _get_images(self):
-        self.image_collection = get_images_in_album(self)
+        self.image_collection = self.db.get_images_in_album(self)
 
 
     def save(self):
-        save_album(self)
+        self.db.save_album(self)
         self._get_images()

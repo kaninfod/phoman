@@ -5,7 +5,7 @@ from app.model.image import image
 from app import *
 
 
-images = imagesDB.find({'db_location':False})
+images = imagesDB.find({'location':False})
 
 def do_loop():
 

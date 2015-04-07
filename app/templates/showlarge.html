@@ -7,7 +7,7 @@
 <div class="col-lg-8">
 
 
-    <img src="/image/store/image/{{ img.db_id }}/size/{{ size }}" class="img-responsive img-thumbnail" alt="pichere">
+    <img src="/image/store/image/{{ img.id }}/size/{{ size }}" class="img-responsive img-thumbnail" alt="pichere">
 </div>
 
 
@@ -16,10 +16,10 @@
         <div class="panel-heading">Information</div>
         <div class="panel-body">
 
-            {{ img.db_date_taken }}
-            {{ img.db_original_height }}
-            {{ img.db_original_width }}
-            {% for tag in img.db_tags %}
+            {{ img.date_taken }}
+            {{ img.original_height }}
+            {{ img.original_width }}
+            {% for tag in img.tags %}
                 <span class="badge">{{ tag }}</span>
             {% endfor %}
 

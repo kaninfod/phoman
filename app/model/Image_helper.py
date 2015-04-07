@@ -44,20 +44,20 @@ class ImageHelper():
     def add_exif_to_image(self, img):
 
         if not self.exif is None:
-            img.db_has_exif = True
-            self._add_exif_data(img, "Make", "db_make")
-            self._add_exif_data(img, "Model", "db_model")
-            self._add_exif_data(img, "ImageUniqueID", "db_ImageUniqueID")
-            self._add_exif_data(img, "ExifImageHeight", "db_original_height")
-            self._add_exif_data(img, "ExifImageWidth", "db_original_width")
-            self._add_exif_data(img, "Orientation", "db_orientation")
-            self._add_exif_data(img, "Flash", "db_flash_fired")
+            img.has_exif = True
+            self._add_exif_data(img, "Make", "make")
+            self._add_exif_data(img, "Model", "model")
+            self._add_exif_data(img, "ImageUniqueID", "ImageUniqueID")
+            self._add_exif_data(img, "ExifImageHeight", "original_height")
+            self._add_exif_data(img, "ExifImageWidth", "original_width")
+            self._add_exif_data(img, "Orientation", "orientation")
+            self._add_exif_data(img, "Flash", "flash_fired")
 
-            img.db_latitude, img.db_longitude = self.get_lat_lon(img.exif)
-            if not img.db_latitude or not img.db_longitude:
-                img.db_location = -2
+            img.location.latitude, img.location.longitude = self.get_lat_lon(img.exif)
+            if not img.location.latitude or not img.location.longitude:
+                img.location.status = -2
             else:
-                img.db_location = 0
+                img.location.status = 0
 
             exif_date_fields = ["DateTimeOriginal", "DateTime"]
             for date_field in exif_date_fields:
@@ -65,26 +65,17 @@ class ImageHelper():
                     date_string = str(img.exif[date_field])
                     date_format = "%Y:%m:%d %H:%M:%S"
                     date = datetime.strptime(date_string, date_format)
-                    setattr(img, "db_date_taken", date)
+                    setattr(img, "date_taken", date)
                     break
             return True
         else:
-            img.db_has_exif = False
+            img.has_exif = False
             return False
 
     def _add_exif_data(self, img, exif_field, mongo_field):
-        #date_fields = ["DateTimeOriginal", "DateTime"]
 
         if exif_field in img.exif:
-            # if exif_field in date_fields:
-            #     date_string = str(img.exif[exif_field])
-            #     date_format = "%Y:%m:%d %H:%M:%S"
-            #     date = datetime.strptime(date_string, date_format)
-            #     setattr(img, mongo_field, date)
-            #
-            # else:
             setattr(img, mongo_field, img.exif[exif_field])
-
             return 1
 
     def get_image_hash(self):
@@ -201,7 +192,7 @@ class ImageHelper():
         return lat, lon
 
 
-    def lookup_location(self, image):
+    def lookup_location(self, image, location):
         # Image location statuses:
         #   -2 : no gps data available
         #   -1 : gps data available but lookup unsuccessful
@@ -210,52 +201,51 @@ class ImageHelper():
 
 
         # app.logger.name = "lookup location"
-        if not image.db_location == -2:
+        if not location.status == -2:
 
             #geolocator = GoogleV3("AIzaSyCGSMJfmJI91d8S6q-LK-rSXO-HpJdZjQQ")
             geolocator = Nominatim(timeout=4)
 
-            point = "%s,%s" % (image.db_latitude, image.db_longitude)
-            app.logger.debug("Looking up %s" % image.db_id)
+            point = "%s,%s" % (location.latitude, location.longitude)
+            app.logger.debug("Looking up %s" % image.id)
             try:
-                location = geolocator.reverse(point)
+                loc = geolocator.reverse(point)
             except GeocoderTimedOut as e:
                 app.logger.warning(e)
-                image.db_location = -1
+                location.status = -1
                 return -1
             except Exception as e:
                 app.logger.warning(e)
-                image.db_location = -1
+                location.status = -1
                 return -1
             finally:
-
-                if "error" in location.raw:
+                if "error" in loc.raw:
                     app.logger.warning(location.raw["error"])
-                    image.db_location = -1
+                    location.status = -1
                     return -1
-                elif "address" in location.raw:
-                    if "country" in location.raw["address"]:
-                        image.db_country = location.raw["address"]['country']
+                elif "address" in loc.raw:
+                    if "country" in loc.raw["address"]:
+                        location.country = loc.raw["address"]['country']
                         app.logger.debug("success getting country")
-                    if "state" in location.raw["address"]:
-                        image.db_state = location.raw["address"]['state']
+                    if "state" in loc.raw["address"]:
+                        location.state = loc.raw["address"]['state']
                         app.logger.debug("success getting state")
-                    if "road" in location.raw["address"]:
-                        image.db_road = location.raw["address"]['road']
+                    if "road" in loc.raw["address"]:
+                        location.road = loc.raw["address"]['road']
                         app.logger.debug("success getting road")
 
-                    image.db_address = location.raw['display_name']
+                    location.address = loc.raw['display_name']
 
-                    image.db_location = True
+                    location.status = True
                     app.logger.info("success getting one or more location entities")
-                    image.db_location = 1
+                    location.status = 1
                     return 1
                 else:
                     app.logger.info("no location returned")
-                    image.db_location = -1
+                    location.status = -1
                     return -1
 
         else:
-            app.logger.debug("No coordinates, id: %s" % image.db_id)
+            app.logger.debug("No coordinates, id: %s" % image.id)
 
 

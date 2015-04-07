@@ -5,23 +5,16 @@ parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.sys.path.insert(0, parentdir)
 
 from app.model.image import image
-from app.model.mongo_db import *
+#from app.model.mongo_db import *
+from app.model.database import Database
 from app.model.Image_helper import *
 from app import *
 import os
 from shutil import move
 
 import argparse
-from app.model.mongo_db import get_images
+db = Database()
 
-file_list = "file.lst"
-file_store = app.config['IMAGE_STORE']
-
-IMAGE_STORE = app.config["IMAGE_STORE"]
-IMAGE_THUMBS = app.config["IMAGE_THUMBS"]
-IMAGE_DETENTION = app.config["IMAGE_DETENTION"]
-OTHER_FILES = app.config["OTHER_FILES"]
-IMAGE_WATCH_FOLDER = app.config["IMAGE_WATCH_FOLDER"]
 
 
 def scan_files():
@@ -38,7 +31,7 @@ def scan_files():
 
 
 def scan_locations():
-    images = get_images({'db_latitude': {"$ne": None}})
+    images = db.get_images({'latitude': {"$ne": None}})
     for img in images:
         img_obj = image(img, update_location=True)
         img_obj.set_tags()
@@ -54,23 +47,19 @@ def scan_files_mac():
                 fn = root + "/" + filename
                 app.logger.debug("scanning: %s" % filename)
                 img = image(fn)
-                app.logger.debug('indexed: %s with exif:%s, and id: %s' % (filename, img.db_has_exif, img.db_id))
+                app.logger.debug('indexed: %s with exif:%s, and id: %s' % (filename, img.has_exif, img.id))
 
 
 def index_watcher():
-    os.system("")
-    path = IMAGE_WATCH_FOLDER
 
-    app.logger.info("Indexing of %s initiated" % IMAGE_WATCH_FOLDER)
+    os.system("")
+    path = app.config["IMAGE_WATCH_FOLDER"]
+
+    app.logger.info("Indexing of %s initiated" % app.config["IMAGE_WATCH_FOLDER"])
     for root, dirnames, filenames in os.walk(path):
         for filename in filenames:
 
             try:
-                # img = None
-                # existing_image = None
-                # existing_record = None
-                # dest_path = None
-                # paths = None
 
                 # Set basic file data
                 input_file_path = os.path.join(root, filename)
@@ -92,7 +81,7 @@ def index_watcher():
             except Exception as e:
                 app.logger.error("An error occured while indexing %s. Error: %s" % (input_file_path, e))
 
-    app.logger.info("Indexing of %s ended" % IMAGE_WATCH_FOLDER)
+    app.logger.info("Indexing of %s ended" % app.config["IMAGE_WATCH_FOLDER"])
 
 def index_jpeg_file(input_file_path):
     # split file path into path, filename and extension
@@ -102,105 +91,112 @@ def index_jpeg_file(input_file_path):
     # get basic file information and populate the image object
     img = image(input_file_path)
     img.index_helper = ImageHelper(input_file_path)
-    img.db_image_hash = img.index_helper.get_image_hash()
-    img.db_size = os.path.getsize(input_file_path)
-    img.db_extension = input_ext.lower()
+    img.image_hash = img.index_helper.get_image_hash()
+    img.size = os.path.getsize(input_file_path)
+    img.extension = input_ext.lower()
 
     #get EXIF data and populate image object with exif data
     img.exif = img.index_helper.get_exif_data()
     if not img.index_helper.add_exif_to_image(img):
         #I have no exif!!
         no_exif_file_handler(input_file_path)
-        return
+        return 0
 
     #generate new filename from exif date
-    img.db_filename = img.index_helper.get_filename_from_date(img.db_date_taken)
+    img.filename = img.index_helper.get_filename_from_date(img.date_taken)
 
     #check if the image already exists - first check based on digital hash of image, then on same filename
-    existing_record = locate_image("db_image_hash", img.db_image_hash)
+    existing_record = db.locate_image("image_hash", img.image_hash)
     if not existing_record:
-        existing_record = locate_image("db_filename", img.db_filename)
+        existing_record = db.locate_image("filename", img.filename)
 
     #Image does not exist in db - create
     if not existing_record:
-        new_image_file_handler(img, input_file_path)
+        path = new_image_file_handler(img, input_file_path)
 
     else:
         #Create image object from db record
         existing_image = image(existing_record)
-        existing_image_file_handler(img, existing_image, input_file_path)
+        path = existing_image_file_handler(img, existing_image, input_file_path)
 
         app.logger.debug("image exists")
 
+    return img
 
 def new_image_file_handler(img, soruce_file):
     # set basic paths
-    img.db_original_subpath = img.index_helper.get_path_from_date(IMAGE_STORE, img.db_date_taken)
-    img.db_original_path = os.path.join(img.db_original_subpath, img.db_filename) + img.db_extension
+    img.original_subpath = img.index_helper.get_path_from_date(app.config["IMAGE_STORE"], img.date_taken)
+    img.original_path = os.path.join(img.original_subpath, img.filename) + img.extension
 
     # check  that the image file does not exist
-    if not os.path.exists(img.db_original_path):
+    if not os.path.exists(img.original_path):
         # move the image to the image store
-        img.index_helper.ensure_dirs_exist(img.db_original_subpath)
-        move(soruce_file, img.db_original_path)
+        img.index_helper.ensure_dirs_exist(img.original_subpath)
+        move(soruce_file, img.original_path)
 
         #generate thumbs and web images
-        dest_path = img.db_original_subpath.replace(IMAGE_STORE, IMAGE_THUMBS)
-        paths = img.index_helper.generate_files(dest_path, img.db_filename, img.db_extension)
-        img.db_large_path, img.db_medium_path, img.db_thumb_path = paths
+        dest_path = img.original_subpath.replace(app.config["IMAGE_STORE"], app.config["IMAGE_THUMBS"])
+        paths = img.index_helper.generate_files(dest_path, img.filename, img.extension)
+        img.large_path, img.medium_path, img.thumb_path = paths
 
         #save image object to db
-        save_image(img)
-        app.logger.debug("New image was saved to DB and path: %s" % img.db_original_path)
+        img.set_tags()
+        db.save_image(img)
+        app.logger.debug("New image was saved to DB and path: %s" % img.original_path)
     else:
-        app.logger.error("Image was not found in DB but did exist in file system. Filename: %s" % img.db_original_path)
+        app.logger.error("Image was not found in DB but did exist in file system. Filename: %s" % img.original_path)
 
+    return dest_path
 
 def existing_image_file_handler(img, existing_image, soruce_file):
     # Ensure that the file does not exist - find new file name if it does
-    img.db_filename = img.db_filename + "_det"
-    img.db_original_subpath = img.index_helper.get_path_from_date(IMAGE_DETENTION, img.db_date_taken)
+    img.filename = img.filename + "_det"
+    img.original_subpath = img.index_helper.get_path_from_date(app.config["IMAGE_DETENTION"], img.date_taken)
 
-    img.db_filename = get_valid_filename(img.db_original_subpath, img.db_filename, img.db_extension)
-    img.db_original_path = os.path.join(img.db_original_subpath, img.db_filename) + img.db_extension
+    img.filename = get_valid_filename(img.original_subpath, img.filename, img.extension)
+    img.original_path = os.path.join(img.original_subpath, img.filename) + img.extension
 
     # move the image to the image detention
-    img.index_helper.ensure_dirs_exist(img.db_original_subpath)
-    move(soruce_file, img.db_original_path)
+    img.index_helper.ensure_dirs_exist(img.original_subpath)
+    move(soruce_file, img.original_path)
 
     #generate thumbs and web images
-    dest_path = img.db_original_subpath.replace(IMAGE_DETENTION, IMAGE_THUMBS)
-    paths = img.index_helper.generate_files(dest_path, img.db_filename, img.db_extension)
-    img.db_large_path, img.db_medium_path, img.db_thumb_path = paths
-
+    dest_path = img.original_subpath.replace(app.config["IMAGE_DETENTION"], app.config["IMAGE_THUMBS"])
+    paths = img.index_helper.generate_files(dest_path, img.filename, img.extension)
+    img.large_path, img.medium_path, img.thumb_path = paths
 
     # save image object to db and create db link to sibling
     # links:
     #     1: images are digitally the same
     #     2: images has alike time stamps but size differs
 
-    if not existing_image.db_size == img.db_size:
+    if not existing_image.size == img.size:
         app.logger.debug("An image with this exact timestamp already exists in the system but "
-                         "has a different file size. A duplicate has been added to %s" % img.db_original_path)
-        img.add_link(existing_image.db_id, 2)
+                         "has a different file size. A duplicate has been added to %s" % img.original_path)
+        img.add_link(existing_image.id, 2)
+        existing_image.add_link(img.id, 2)
     else:
         app.logger.debug("An image which appears to be an exact copy already exists in the system. "
-                         "A duplicate has been added to %s" % img.db_original_path)
-        img.add_link(existing_image.db_id, 1)
+                         "A duplicate has been added to %s" % img.original_path)
+        img.add_link(existing_image.id, 1)
+        existing_image.add_link(img.id, 1)
 
-    img.db_tags.append({"category": "Indexer", "value": "Double"})
+    img.tags.append({"category": "Indexer", "value": "Double"})
+    existing_image.tags.append({"category": "Indexer", "value": "Double"})
     img.set_tags()
-    save_image(img)
+    db.save_image(img)
+    db.save_image(existing_image)
 
+    return dest_path
 
 def no_exif_file_handler(filepath):
-    app.logger.info("This image (%s) has no EXIF data and has been left in %s" % (filepath, IMAGE_WATCH_FOLDER))
+    app.logger.info("This image (%s) has no EXIF data and has been left in %s" % (filepath, app.config["IMAGE_WATCH_FOLDER"]))
     pass
 
 
 def other_file_handler(source, filename, extension):
     no_image = ImageHelper()
-    dest_path = os.path.join(OTHER_FILES, extension.lstrip("."))
+    dest_path = os.path.join(app.config["OTHER_FILES"], extension.lstrip("."))
 
     no_image.ensure_dirs_exist(dest_path)
     dest_path = os.path.join(dest_path, filename) + extension
