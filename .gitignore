@@ -2,7 +2,7 @@
 .idea
 
 
-phoman.conf
+photo_tank/phototank.conf
 
 #mongo
 mongo_data
