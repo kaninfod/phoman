@@ -1,17 +1,12 @@
 #from app.model.mongo_db import get_image_from_id, save_image
 from app.model.location import Location
+from app.model.files import Files
 from app.model.database import Database
 
 class image():
 
 
-    filename = None
-    original_subpath = None
-    original_path = None
-    large_path = None
-    medium_path = None
-    thumb_path = None
-    size = None
+
     make = None
     model = None
     ImageUniqueID = None
@@ -24,19 +19,12 @@ class image():
     flash_fired = None
     tags = []
     image_hash = None
-    extension = None
     links = {}
     location = Location
+    files = Files
 
 
     db_fields = [
-        "filename",
-        "original_subpath", 
-        "original_path",
-        "large_path",
-        "medium_path",
-        "thumb_path",
-        "size",
         "make",
         "model",
         "ImageUniqueID",
@@ -49,14 +37,15 @@ class image():
         "flash_fired",
         "location",
         "image_hash",
-        "extension",
         "links",
-        "tags"
+        "tags",
+        "files"
     ]
 
     def __init__(self, image_source=None, image_id=None, update_location=False):
         self.tags = []
         self.location = Location()
+        self.files = Files()
         self.db = Database()
 
         if image_id:
@@ -69,8 +58,7 @@ class image():
 
             elif isinstance(image_source, dict):
                 self.__mongo_populate__(image_source)
-                #if update_location:
-                #    lookup_location(self)
+
 
     def __mongo_attributes__(self):
         return [i for i in self.db_fields]
@@ -85,6 +73,9 @@ class image():
                 setattr(self, "id", str(record["_id"]))
             elif field == "location":
                 self.location.__mongo_populate__(record[field])
+            elif field == "files":
+                self.files.__mongo_populate__(record[field])
+
             else:
                 setattr(self, field, record[field])
 
@@ -128,13 +119,12 @@ class image():
         if not self.has_exif:
             self.tags.append({"category": category, "value":  "No EXIF"})
 
-        if self.size <= 1024000:
+        if self.files.size <= 1024000:
             self.tags.append({"category": category, "value":  "Small file"})
-        if 1024000 < self.size < 3600000:
+        if 1024000 < self.files.size < 3600000:
             self.tags.append({"category": category, "value":  "Medium file"})
-        if self.size >= 3600000:
+        if self.files.size >= 3600000:
             self.tags.append({"category": category, "value":  "Large file"})
-
 
         category = "Location"
         if self.location.country:
@@ -143,8 +133,6 @@ class image():
             self.tags.append({"category": category, "value":  self.location.state})
         if not self.location.status == 1:
             self.tags.append({"category": category, "value":  "No Location"})
-
-
 
     def __str__(self):
         return self.original_path

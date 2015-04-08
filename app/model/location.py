@@ -27,7 +27,13 @@ class Location():
 
     def __mongo_populate__(self, record):
         for field in record:
-                setattr(self, field, record[field])
+            setattr(self, field, record[field])
 
     def __init__(self):
         pass
+
+    def serialize(self):
+        serial_dict ={}
+        for field in self.__mongo_attributes__():
+            serial_dict[field] = getattr(self, field)
+        return serial_dict

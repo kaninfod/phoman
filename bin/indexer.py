@@ -92,8 +92,8 @@ def index_jpeg_file(input_file_path):
     img = image(input_file_path)
     img.index_helper = ImageHelper(input_file_path)
     img.image_hash = img.index_helper.get_image_hash()
-    img.size = os.path.getsize(input_file_path)
-    img.extension = input_ext.lower()
+    img.files.size = os.path.getsize(input_file_path)
+    img.files.extension = input_ext.lower()
 
     #get EXIF data and populate image object with exif data
     img.exif = img.index_helper.get_exif_data()
@@ -103,12 +103,12 @@ def index_jpeg_file(input_file_path):
         return 0
 
     #generate new filename from exif date
-    img.filename = img.index_helper.get_filename_from_date(img.date_taken)
+    img.files.filename = img.index_helper.get_filename_from_date(img.date_taken)
 
     #check if the image already exists - first check based on digital hash of image, then on same filename
     existing_record = db.locate_image("image_hash", img.image_hash)
     if not existing_record:
-        existing_record = db.locate_image("filename", img.filename)
+        existing_record = db.locate_image("files.filename", img.files.filename)
 
     #Image does not exist in db - create
     if not existing_record:
@@ -125,59 +125,59 @@ def index_jpeg_file(input_file_path):
 
 def new_image_file_handler(img, soruce_file):
     # set basic paths
-    img.original_subpath = img.index_helper.get_path_from_date(app.config["IMAGE_STORE"], img.date_taken)
-    img.original_path = os.path.join(img.original_subpath, img.filename) + img.extension
+    img.files.original_subpath = img.index_helper.get_path_from_date(app.config["IMAGE_STORE"], img.date_taken)
+    img.files.original_path = os.path.join(img.files.original_subpath, img.files.filename) + img.files.extension
 
     # check  that the image file does not exist
-    if not os.path.exists(img.original_path):
+    if not os.path.exists(img.files.original_path):
         # move the image to the image store
-        img.index_helper.ensure_dirs_exist(img.original_subpath)
-        move(soruce_file, img.original_path)
+        img.index_helper.ensure_dirs_exist(img.files.original_subpath)
+        move(soruce_file, img.files.original_path)
 
         #generate thumbs and web images
-        dest_path = img.original_subpath.replace(app.config["IMAGE_STORE"], app.config["IMAGE_THUMBS"])
-        paths = img.index_helper.generate_files(dest_path, img.filename, img.extension)
-        img.large_path, img.medium_path, img.thumb_path = paths
+        dest_path = img.files.original_subpath.replace(app.config["IMAGE_STORE"], app.config["IMAGE_THUMBS"])
+        paths = img.index_helper.generate_files(dest_path, img.files.filename, img.files.extension)
+        img.files.large_path, img.files.medium_path, img.files.thumb_path = paths
 
         #save image object to db
         img.set_tags()
         db.save_image(img)
-        app.logger.debug("New image was saved to DB and path: %s" % img.original_path)
+        app.logger.debug("New image was saved to DB and path: %s" % img.files.original_path)
     else:
-        app.logger.error("Image was not found in DB but did exist in file system. Filename: %s" % img.original_path)
+        app.logger.error("Image was not found in DB but did exist in file system. Filename: %s" % img.files.original_path)
 
     return dest_path
 
 def existing_image_file_handler(img, existing_image, soruce_file):
     # Ensure that the file does not exist - find new file name if it does
-    img.filename = img.filename + "_det"
-    img.original_subpath = img.index_helper.get_path_from_date(app.config["IMAGE_DETENTION"], img.date_taken)
+    img.files.filename = img.files.filename + "_det"
+    img.files.original_subpath = img.index_helper.get_path_from_date(app.config["IMAGE_DETENTION"], img.date_taken)
 
-    img.filename = get_valid_filename(img.original_subpath, img.filename, img.extension)
-    img.original_path = os.path.join(img.original_subpath, img.filename) + img.extension
+    img.files.filename = get_valid_filename(img.files.original_subpath, img.files.filename, img.files.extension)
+    img.files.original_path = os.path.join(img.files.original_subpath, img.files.filename) + img.files.extension
 
     # move the image to the image detention
-    img.index_helper.ensure_dirs_exist(img.original_subpath)
-    move(soruce_file, img.original_path)
+    img.index_helper.ensure_dirs_exist(img.files.original_subpath)
+    move(soruce_file, img.files.original_path)
 
     #generate thumbs and web images
-    dest_path = img.original_subpath.replace(app.config["IMAGE_DETENTION"], app.config["IMAGE_THUMBS"])
-    paths = img.index_helper.generate_files(dest_path, img.filename, img.extension)
-    img.large_path, img.medium_path, img.thumb_path = paths
+    dest_path = img.files.original_subpath.replace(app.config["IMAGE_DETENTION"], app.config["IMAGE_THUMBS"])
+    paths = img.index_helper.generate_files(dest_path, img.files.filename, img.files.extension)
+    img.files.large_path, img.files.medium_path, img.files.thumb_path = paths
 
     # save image object to db and create db link to sibling
     # links:
     #     1: images are digitally the same
     #     2: images has alike time stamps but size differs
 
-    if not existing_image.size == img.size:
+    if not existing_image.files.size == img.files.size:
         app.logger.debug("An image with this exact timestamp already exists in the system but "
-                         "has a different file size. A duplicate has been added to %s" % img.original_path)
+                         "has a different file size. A duplicate has been added to %s" % img.files.original_path)
         img.add_link(existing_image.id, 2)
         existing_image.add_link(img.id, 2)
     else:
         app.logger.debug("An image which appears to be an exact copy already exists in the system. "
-                         "A duplicate has been added to %s" % img.original_path)
+                         "A duplicate has been added to %s" % img.files.original_path)
         img.add_link(existing_image.id, 1)
         existing_image.add_link(img.id, 1)
 

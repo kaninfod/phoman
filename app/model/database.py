@@ -33,7 +33,9 @@ class Database(object):
 
             for field in image.__mongo_attributes__():
                 if field == "location":
-                    imgobject[field] = image.location.__dict__
+                    imgobject[field] = image.location.serialize()
+                elif field == "files":
+                    imgobject[field] = image.files.serialize()
                 elif not field == "id":
                     imgobject[field] = getattr(image, field)
 

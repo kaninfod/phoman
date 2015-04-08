@@ -22,13 +22,13 @@ def imagestore(image_id, size):
     im = image(image_id=image_id)
     if im:
         if size == "thumb":
-            path = im.thumb_path
+            path = im.files.thumb_path
         elif size == "medium":
-            path = im.medium_path
+            path = im.files.medium_path
         elif size == "large":
             path = im.large_path
         elif size == "original":
-            path = im.original_subpath
+            path = im.files.original_subpath
     return send_file(path)
 
 

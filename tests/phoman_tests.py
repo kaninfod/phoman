@@ -48,10 +48,10 @@ class TestIndexNewFile(unittest.TestCase):
 
         test_file_path = os.path.join(self.src_files, "test_image_1.jpg")
         result = indexer.index_jpeg_file(test_file_path)
-        self.assertTrue(os.path.exists(result.original_path))
-        self.assertTrue(os.path.exists(result.large_path))
-        self.assertTrue(os.path.exists(result.thumb_path))
-        self.assertTrue(os.path.exists(result.medium_path))
+        self.assertTrue(os.path.exists(result.files.original_path))
+        self.assertTrue(os.path.exists(result.files.large_path))
+        self.assertTrue(os.path.exists(result.files.thumb_path))
+        self.assertTrue(os.path.exists(result.files.medium_path))
 
 
 class TestIndexExistingFile(unittest.TestCase):
@@ -87,10 +87,10 @@ class TestIndexExistingFile(unittest.TestCase):
         test_file_path = os.path.join(self.src_files, "test_image_2.jpg")
         result = indexer.index_jpeg_file(test_file_path)
 
-        self.assertTrue(os.path.exists(result.original_path))
-        self.assertTrue(os.path.exists(result.large_path))
-        self.assertTrue(os.path.exists(result.thumb_path))
-        self.assertTrue(os.path.exists(result.medium_path))
+        self.assertTrue(os.path.exists(result.files.original_path))
+        self.assertTrue(os.path.exists(result.files.large_path))
+        self.assertTrue(os.path.exists(result.files.thumb_path))
+        self.assertTrue(os.path.exists(result.files.medium_path))
         self.assertEqual(result.links["type"], 1)
 
         test_file_path = os.path.join(self.src_files, "test_image_3.jpg")
