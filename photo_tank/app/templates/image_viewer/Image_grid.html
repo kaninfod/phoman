@@ -1,0 +1,55 @@
+
+
+
+<div class="panel panel-default">
+
+
+    <div class="panel-heading clearfix">
+
+        <h4 class="panel-title pull-left" style="padding-top: 7.5px;">
+
+            <span style="margin-left: 10px margin-right: 10px" class="badge">{{ album.image_count }}</span>
+            {{ album.name }}
+            <a href="#" data-target="#mymodal" data-toggle="modal" class="btn btn-info btn-xs">
+                <i class="fa fa-pencil-square-o"></i>
+            </a>
+        </h4>
+        <div class="btn-group pull-right">
+
+
+
+            <a href="">
+                <span id="selected" style="display: none">here</span>
+            </a>
+        </div>
+    </div>
+
+
+
+
+    <div class="panel-body">
+
+            <div class="row no-gutter">
+                {% for img in album %}
+
+                    <div class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
+                        <div class="thumbnail photo-group">
+                            <a href="#" class="photo-wrapper">
+                                <div class="photo">
+                                    <img id="{{ img.id }}" src="/image/store/image/{{ img.id }}/size/thumb" alt="..." class="img-responsive">
+                                    <span class="label label-inverse photo-label">{{ img.date_taken }}</span>
+
+                                    <i class="ticked photo-tick fa fa-check-circle-o fa-2x" style="display: none"></i>
+                                    <i class="unticked photo-tick fa fa-circle-o fa-2x"></i>
+
+                                </div>
+                            </a>
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+            </div>
+
+    </div>
+</div>

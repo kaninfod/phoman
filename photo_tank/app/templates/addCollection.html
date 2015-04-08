@@ -1,0 +1,31 @@
+
+
+
+{% extends "layout.html" %}
+{% import 'bootstrapField.html' as field %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<form action="" method="post" name="addCollection">
+    {{ form.hidden_tag() }}
+
+    {{ field.render_field(form.collectionName) }}
+    {{ field.render_field(form.make) }}
+    {{ field.render_field(form.model) }}
+    {{ field.render_field(form.dateTaken_gt, "date") }}
+    {{ field.render_field(form.dateTaken_lt, "date") }}
+
+
+          <div class="bs-example">
+            <input type="text" value="Amsterdam,Washington,Sydney,Beijing,Cairo" data-role="tagsinput" />
+          </div>
+<p><input type="submit" value="Add Collection"></p>
+</form>
+
+
+<div id="the-basics">
+  <input class="typeahead" type="text" placeholder="States of USA">
+</div>
+
+
+{% endblock %}
