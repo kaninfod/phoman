@@ -3,13 +3,8 @@ __author__ = 'hingem'
 import os
 import shutil
 import unittest
-
 from photo_tank.indexer.indexer import index_jpeg_file, get_valid_filename
-from photo_tank.app import *
-from photo_tank.model.database import Database
-
-
-db = Database()
+from photo_tank.app import app
 
 
 
@@ -23,7 +18,10 @@ def init_paths():
     app.config["IMAGE_DETENTION"] = os.path.join(base_path, "detention")
     app.config["OTHER_FILES"] = os.path.join(base_path, "other")
     app.config["IMAGE_WATCH_FOLDER"] = os.path.join(base_path, "watch")
-    db.reinitialize()
+    DB_PORT = app.config["DB_PORT"]
+    DB_HOST = app.config["DB_HOST"]
+    DB_NAME = "test_db"
+    app.db.reinitialize(port=DB_PORT, host=DB_HOST, db_name=DB_NAME)
 
 class TestIndexNewFile(unittest.TestCase):
 
@@ -33,7 +31,7 @@ class TestIndexNewFile(unittest.TestCase):
         self.src_files = os.path.join(os.getcwd(), "test_files")
 
     def tearDown(self):
-        db.drop_database(app.config['DB_NAME'])
+        app.db.drop_database(app.config['DB_NAME'])
 
         src_path = os.path.join(app.config["IMAGE_STORE"],"2014","11","22","20141122_154645.jpg")
         dst_path = os.path.join(self.src_files, "test_image_1.jpg")
@@ -60,7 +58,7 @@ class TestIndexExistingFile(unittest.TestCase):
 
 
     def tearDown(self):
-        db.drop_database(app.config['DB_NAME'])
+        app.db.drop_database(app.config['DB_NAME'])
 
         src_path = os.path.join(app.config["IMAGE_STORE"],"2014","11","22","20141122_154645.jpg")
         dst_path = os.path.join(self.src_files, "test_image_1.jpg")
@@ -102,7 +100,7 @@ class TestValidFilename(unittest.TestCase):
         self.src_files = os.path.join(os.getcwd(), "test_files")
 
     def tearDown(self):
-        db.drop_database(app.config['DB_NAME'])
+        app.db.drop_database(app.config['DB_NAME'])
         shutil.rmtree(self.dst)
 
 
@@ -115,8 +113,3 @@ class TestValidFilename(unittest.TestCase):
         shutil.copy(src, os.path.join(self.dst, "test_image.jpg"))
         name = get_valid_filename(self.dst, "test_image", '.jpg')
         self.assertEquals(name, "test_image_2")
-
-
-if __name__=='__main__':
-
-    unittest.main()

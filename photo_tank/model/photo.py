@@ -1,4 +1,4 @@
-#from app.model.mongo_db import get_image_from_id, save_image
+
 from photo_tank.model.location import Location
 from photo_tank.model.files import Files
 from photo_tank.model.database import Database

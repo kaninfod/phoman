@@ -1,7 +1,8 @@
 __author__ = 'martin'
 
-from photo_tank.model.photo import Photo
 from photo_tank.model.database import Database
+from photo_tank.model.photo import Photo
+
 
 class Album():
     def __init__(self, album_id=None):
@@ -15,7 +16,6 @@ class Album():
         self.type = {}
         self.id = album_id
         self.image_count = ""
-
         self.image_collection = []
         self._paginator = None
         self._position = 0
@@ -23,7 +23,6 @@ class Album():
 
         if album_id:
             self._get_collection()
-
 
 
     @property

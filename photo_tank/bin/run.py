@@ -1,6 +1,5 @@
 #!flask/bin/python
 import optparse
-
 from photo_tank.app import app
 
 
@@ -20,6 +19,7 @@ def tornado(option, opt_str, value, parser):
     IOLoop.instance().start()
 
 def builtin(option, opt_str, value, parser):
+
     print('Built-in development server on port {port}...'.format(port=getPort(value)))
     app.run(host="localhost",port=getPort(value),debug=True)
 

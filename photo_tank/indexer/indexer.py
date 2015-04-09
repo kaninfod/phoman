@@ -1,9 +1,5 @@
 __author__ = 'hingem'
 
-#parentdir = '/Users/hingem/PycharmProjects/Phototank_project' #os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#os.sys.path.insert(0, parentdir)
-#import sys;
-#sys.path.append(parentdir)
 
 from shutil import move
 import argparse
@@ -11,13 +7,10 @@ import argparse
 from photo_tank.model.photo import Photo
 
 from photo_tank.model.Image_helper import *
-from photo_tank.app import *
-from photo_tank.model.database import Database
+from photo_tank.app import app
 import errno
 
-db = Database()
-
-
+#db = Database()
 
 # def scan_files():
 #     hourly_scan = r"""find '""" + file_store + r"""' -newermt $(date +%Y-%m-%d -d '1 year ago') -type f -print > """ + file_list
@@ -33,7 +26,7 @@ db = Database()
 
 
 def scan_locations():
-    images = db.get_images({'latitude': {"$ne": None}})
+    images = app.db.get_images({'latitude': {"$ne": None}})
     for img in images:
         img_obj = Photo(img, update_location=True)
         img_obj.set_tags()
@@ -108,9 +101,9 @@ def index_jpeg_file(input_file_path):
     img.files.filename = get_filename_from_date(img.date_taken)
 
     #check if the image already exists - first check based on digital hash of image, then on same filename
-    existing_record = db.locate_image("image_hash", img.image_hash)
+    existing_record = app.db.locate_image("image_hash", img.image_hash)
     if not existing_record:
-        existing_record = db.locate_image("files.filename", img.files.filename)
+        existing_record = app.db.locate_image("files.filename", img.files.filename)
 
     #Image does not exist in db - create
     if not existing_record:
@@ -144,7 +137,7 @@ def new_image_file_handler(img, soruce_file):
 
         #save image object to db
         img.set_tags()
-        db.save_image(img)
+        app.db.save_image(img)
         app.logger.debug("New image was saved to DB and path: %s" % img.files.original_path)
     else:
         app.logger.error("Image was not found in DB but did exist in file system. Filename: %s" % img.files.original_path)
@@ -187,8 +180,8 @@ def existing_image_file_handler(img, existing_image, soruce_file):
     img.tags.append({"category": "Indexer", "value": "Double"})
     existing_image.tags.append({"category": "Indexer", "value": "Double"})
     img.set_tags()
-    db.save_image(img)
-    db.save_image(existing_image)
+    app.db.save_image(img)
+    app.db.save_image(existing_image)
 
     return dest_path
 
@@ -268,7 +261,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.files:
-        scan_files()
+        pass
+        #scan_files()
     elif args.locations:
         scan_locations()
     elif args.mac:

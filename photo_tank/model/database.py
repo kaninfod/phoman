@@ -2,16 +2,16 @@ __author__ = 'hingem'
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-from photo_tank.app import app
+
 
 
 class Database(object):
 
     class __singleton:
-        def __init__(self):
+        def __init__(self, host=None, port=None, db_name=None):
             self.val = None
-            self.client = MongoClient(app.config["DB_HOST"], app.config["DB_PORT"])
-            self.connection = self.client[app.config["DB_NAME"]]
+            self.client = MongoClient(host, port)
+            self.connection = self.client[db_name]
 
             self.images = self.connection['images']
             self.albums = self.connection['albums']
@@ -19,8 +19,8 @@ class Database(object):
         def __str__(self):
             return self.val
 
-        def reinitialize(self):
-            self.__init__()
+        def reinitialize(self, host=None, port=None, db_name=None):
+            self.__init__(host=host,port=port,db_name=db_name)
 
         def drop_collection(self, collection_name):
             return self.connection.drop_collection(collection_name)
@@ -176,9 +176,9 @@ class Database(object):
 
 
     instance = None
-    def __new__(cls):
+    def __new__(cls, host=None, port=None, db_name=None):
         if not Database.instance:
-            Database.instance = Database.__singleton()
+            Database.instance = Database.__singleton(host=host, port=port, db_name=db_name)
         return Database.instance
 
     def __getattr__(self, item):
