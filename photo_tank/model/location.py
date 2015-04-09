@@ -10,6 +10,9 @@ class Location():
     state = None
     address = None
     road = None
+    city = None
+    suburb = None
+    postcode = None
     db_fields = [
         "status",
         "latitude",
