@@ -177,6 +177,7 @@ class ImageHelper():
 
             point = "%s,%s" % (location.latitude, location.longitude)
             app.logger.debug("Looking up %s" % image.id)
+            loc = None
             try:
                 loc = geolocator.reverse(point)
             except GeocoderTimedOut as e:
@@ -196,16 +197,30 @@ class ImageHelper():
                     if "country" in loc.raw["address"]:
                         location.country = loc.raw["address"]['country']
                         app.logger.debug("success getting country")
+
                     if "state" in loc.raw["address"]:
                         location.state = loc.raw["address"]['state']
                         app.logger.debug("success getting state")
+
+                    if "city" in loc.raw["address"]:
+                        location.city = loc.raw["address"]['city']
+                        app.logger.debug("success getting city")
+
+                    if "suburb" in loc.raw["address"]:
+                        location.suburb = loc.raw["address"]['suburb']
+                        app.logger.debug("success getting suburb")
+
+                    if "postcode" in loc.raw["address"]:
+                        location.postcode = loc.raw["address"]['postcode']
+                        app.logger.debug("success getting postcode")
+
                     if "road" in loc.raw["address"]:
                         location.road = loc.raw["address"]['road']
                         app.logger.debug("success getting road")
 
                     location.address = loc.raw['display_name']
 
-                    location.status = True
+
                     app.logger.info("success getting one or more location entities")
                     location.status = 1
                     return 1

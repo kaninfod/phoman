@@ -16,6 +16,9 @@ class Location():
         "longitude",
         "location",
         "country",
+        "city",
+        "suburb",
+        "postcode",
         "state",
         "address",
         "road"
