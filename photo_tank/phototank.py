@@ -6,7 +6,7 @@ __author__ = 'hingem'
 import sys
 
 from photo_tank.bin.daemon import Daemon
-from app import app
+from photo_tank.app import app
 
 
 class MyDaemon(Daemon):
