@@ -1,8 +1,6 @@
 __author__ = 'hingem'
 
 
-#!/usr/bin/env python
-
 import sys
 
 from photo_tank.bin.daemon import Daemon
