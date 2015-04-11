@@ -188,7 +188,7 @@ class ImageHelper():
                 app.logger.warning(e)
                 location.status = -1
                 return -1
-            finally:
+            else:
                 if "error" in loc.raw:
                     app.logger.warning(location.raw["error"])
                     location.status = -1
