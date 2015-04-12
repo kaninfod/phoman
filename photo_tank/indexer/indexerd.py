@@ -21,9 +21,10 @@ class MyDaemon(Daemon):
 
     def run_scheduled(self, message=None):
         index_watcher()
+
         self.logger.warning("starting indexer...")
         #self.logger.warning('get_file() took {0} seconds; reschedule in {1} seconds'.format(download_time, restart))
-        self.scheduler.enter(20, 1, self. run_scheduled)
+        self.scheduler.enter(5, 1, self. run_scheduled)
 
 
 

@@ -10,21 +10,6 @@ from photo_tank.model.Image_helper import *
 from photo_tank.app import app
 import errno
 
-#db = Database()
-
-# def scan_files():
-#     hourly_scan = r"""find '""" + file_store + r"""' -newermt $(date +%Y-%m-%d -d '1 year ago') -type f -print > """ + file_list
-#     app.logger.debug("before")
-#     os.system(hourly_scan)
-#     app.logger.debug("after")
-#     with open(file_list) as f:
-#         for file_path in f:
-#             file_path = file_path.strip("\n")
-#             if os.path.isfile(file_path):
-#                 app.logger.debug("scanning: %s" % file_path)
-#                 img = image(file_path)
-
-
 def scan_locations():
     images = app.db.get_images({'latitude': {"$ne": None}})
     for img in images:
@@ -161,6 +146,14 @@ def existing_image_file_handler(img, existing_image, soruce_file):
     paths = img.index_helper.generate_files(dest_path, img.files.filename, img.files.extension)
     img.files.large_path, img.files.medium_path, img.files.thumb_path = paths
 
+
+    img.tags.append({"category": "Indexer", "value": "Double"})
+    existing_image.tags.append({"category": "Indexer", "value": "Double"})
+    img.set_tags()
+    app.db.save_image(img)
+
+
+
     # save image object to db and create db link to sibling
     # links:
     #     1: images are digitally the same
@@ -171,17 +164,16 @@ def existing_image_file_handler(img, existing_image, soruce_file):
                          "has a different file size. A duplicate has been added to %s" % img.files.original_path)
         img.add_link(existing_image.id, 2)
         existing_image.add_link(img.id, 2)
+
     else:
         app.logger.debug("An image which appears to be an exact copy already exists in the system. "
                          "A duplicate has been added to %s" % img.files.original_path)
         img.add_link(existing_image.id, 1)
         existing_image.add_link(img.id, 1)
 
-    img.tags.append({"category": "Indexer", "value": "Double"})
-    existing_image.tags.append({"category": "Indexer", "value": "Double"})
-    img.set_tags()
     app.db.save_image(img)
     app.db.save_image(existing_image)
+
 
     return dest_path
 
