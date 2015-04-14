@@ -3,7 +3,7 @@ __author__ = 'hingem'
 import os
 import shutil
 import unittest
-from photo_tank.indexer.watcher import index_jpeg_file, get_valid_filename
+from photo_tank.indexer.index_files import index_jpeg_file, get_valid_filename
 from photo_tank.app import app
 
 

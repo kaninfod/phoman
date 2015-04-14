@@ -30,30 +30,18 @@ class Database(object):
             return self.client.drop_database(db_name)
 
 
-        def save_image(self, image, upsert=True):
+        def save_image(self, photo, upsert=True):
 
-            imgobject = {}
-
-            for field in image.__mongo_attributes__():
-                if field == "location":
-                    imgobject[field] = image.location.serialize()
-                elif field == "files":
-                    imgobject[field] = image.files.serialize()
-                elif field == "dropbox":
-                    imgobject[field] = image.dropbox.serialize()
-                elif not field == "id":
-                    imgobject[field] = getattr(image, field)
-
-            imgobject["modified"] = datetime.datetime.utcnow()
+            record = photo.serialize()
 
             if upsert:
-                self.images.update({"image_hash": image.image_hash}, {"$set": imgobject}, upsert=True)
+                self.images.update({"image_hash": photo.image_hash}, {"$set": record}, upsert=True)
             else:
-                self.images.insert(imgobject)
-            image.id = str(self.images.find({"image_hash":image.image_hash})[0]["_id"])
-            return image.id
+                self.images.insert(record)
+            photo.id = str(self.images.find({"image_hash":photo.image_hash})[0]["_id"])
+            return photo.id
 
-        def get_image_from_id(self, id):
+        def get_photo_from_id(self, id):
 
             record = self.images.find_one({'_id': ObjectId(id)})
             return record

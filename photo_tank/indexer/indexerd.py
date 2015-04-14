@@ -4,8 +4,8 @@ __author__ = 'hingem'
 import sys
 
 from photo_tank.bin.daemon import Daemon
-from photo_tank.indexer.watcher import index_watcher
-from photo_tank.indexer.locations import location_watcher
+from photo_tank.indexer.index_files import index_watcher
+from photo_tank.indexer.index_locations import location_watcher
 import sched
 import time
 import logging

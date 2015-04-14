@@ -3,6 +3,7 @@ from photo_tank.model.location import Location
 from photo_tank.model.files import Files
 from photo_tank.model.database import Database
 from photo_tank.model.dropbox_metadata import DropboxMetadata
+from datetime import datetime
 
 class Photo():
 
@@ -78,6 +79,21 @@ class Photo():
             else:
                 setattr(self, field, record[field])
 
+    def serialize(self):
+        serial_dict ={}
+        for field in self.__mongo_attributes__():
+            if field == "location":
+                serial_dict[field] = self.location.serialize()
+            elif field == "files":
+                serial_dict[field] = self.files.serialize()
+            elif field == "dropbox":
+                serial_dict[field] = self.dropbox.serialize()
+            elif field == "modified":
+                serial_dict["modified"] = datetime.utcnow()
+            elif not field == "id":
+                serial_dict[field] = getattr(self, field)
+
+        return serial_dict
 
     def add_link(self, ref, type):
         self.links.update(
