@@ -1,6 +1,13 @@
 __author__ = 'hingem'
-# Include the Dropbox SDK
+
 import dropbox
+import os
+from photo_tank.model.database import Database
+from photo_tank.model.photo import Photo
+
+
+
+
 
 def auth_dropbox():
 
@@ -20,23 +27,75 @@ def auth_dropbox():
     access_token, user_id = flow.finish(code)
     pass
 
-def put_photo(photo):
-    access_token = 'UFefx_vmXWwAAAAAAAAK7WmXaQf6_uYnZQpJrP9bZ7uGWIaAdLQw8tiU4wYyBd1F'
-    user_id = '8285415'
+def login(access_token):
+
     client = dropbox.client.DropboxClient(access_token)
-    print('linked account: ', client.account_info())
+    return client
 
-    f = open('working-draft.txt', 'rb')
-    response = client.put_file('/magnum-opus.txt', f)
-    print('uploaded: ', response)
+def get_paths(photo_path):
 
-    folder_metadata = client.metadata('/')
-    print('metadata: ', folder_metadata)
+    p, day = os.path.split(photo_path)
+    p, month = os.path.split(p)
+    p, year = os.path.split(p)
 
-    f, metadata = client.get_file_and_metadata('/magnum-opus.txt')
-    out = open('magnum-opus.txt', 'wb')
-    out.write(f.read())
-    out.close()
-    print(metadata)
 
-put_photo()
+    path = "/{}/{}/{}".format(year ,month, day)
+
+    return path
+def create_path(path, client):
+    try:
+        response = client.file_create_folder(path=path)
+        return True
+    except dropbox.rest.ErrorResponse as e:
+        if e.status == 403:
+            return True
+    except Exception as e:
+        return False
+
+def put_photo(photo, client):
+    try:
+
+
+        path = get_paths(photo.files.original_subpath)
+        dropbox_path = "{}/{}{}".format(path, photo.id, photo.files.extension)
+
+        #metadata = client.metadata(dropbox_path)
+
+        if create_path(path, client):
+
+            f = open(photo.files.original_path, 'rb')
+            response = client.put_file(dropbox_path,f, overwrite=True)
+            photo.dropbox.modified = response["modified"]
+            photo.dropbox.revision = response["rev"]
+            photo.dropbox.size = response["bytes"]
+            photo.dropbox.path = response["path"]
+            photo.__mongo_save__()
+
+    except Exception as e:
+        return False
+
+
+
+    return True
+
+def update_to_dropbox():
+    DB_PORT = 27017
+    DB_HOST = 'localhost'
+    DB_NAME = 'pt2'
+
+    db = Database(port=DB_PORT, host=DB_HOST, db_name=DB_NAME)
+
+    access_token = 'UFefx_vmXWwAAAAAAAAK7WmXaQf6_uYnZQpJrP9bZ7uGWIaAdLQw8tiU4wYyBd1F'
+    dropbox_client = login(access_token)
+
+    cursor = db.get_dropbox_updates()
+    for rec in cursor:
+        photo = Photo(image_id=rec["_id"])
+        put_photo(photo, client=dropbox_client)
+
+update_to_dropbox()
+
+
+
+
+

@@ -5,6 +5,7 @@ import sys
 
 from photo_tank.bin.daemon import Daemon
 from photo_tank.indexer.watcher import index_watcher
+from photo_tank.indexer.locations import location_watcher
 import sched
 import time
 import logging
@@ -19,12 +20,15 @@ class MyDaemon(Daemon):
     fh.setLevel(logging.DEBUG)
     logger.addHandler(fh)
 
-    def run_scheduled(self, message=None):
-        index_watcher()
 
-        self.logger.warning("starting indexer...")
-        #self.logger.warning('get_file() took {0} seconds; reschedule in {1} seconds'.format(download_time, restart))
-        self.scheduler.enter(5, 1, self. run_scheduled)
+    def run_watcher(self):
+
+        self.logger.warning("starting file indexer..." + str(time.time()))
+        index_watcher()
+        self.logger.warning("starting location indexer..." + str(time.time()))
+        location_watcher()
+
+
 
 
 
@@ -32,10 +36,12 @@ class MyDaemon(Daemon):
     def run(self):
         # Build a scheduler object that will look at absolute times
         self.scheduler = sched.scheduler(time.time, time.sleep)
-        self.logger.warning("Indexer...")
-        # start in 1 second
-        self.scheduler.enter(1, 1, self.run_scheduled)
-        self.scheduler.run()
+        self.logger.warning("Warming indexer...")
+
+        while True:
+            self.scheduler.enter(30, 1, self.run_watcher)
+            self.scheduler.run()
+
 
 
 if __name__ == "__main__":

@@ -3,14 +3,7 @@ __author__ = 'hingem'
 
 class Files():
 
-    filename = None
-    original_subpath = None
-    extension = None
-    original_path = None
-    large_path = None
-    medium_path = None
-    thumb_path = None
-    size = None
+
 
     db_fields = [
         "filename",
@@ -22,7 +15,15 @@ class Files():
         "thumb_path",
         "size"
     ]
-
+    def __init__(self):
+        self.filename = None
+        self.original_subpath = None
+        self.extension = None
+        self.original_path = None
+        self.large_path = None
+        self.medium_path = None
+        self.thumb_path = None
+        self.size = None
 
     def __mongo_attributes__(self):
         return [i for i in self.db_fields]

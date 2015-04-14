@@ -1,6 +1,7 @@
 __author__ = 'hingem'
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import datetime
 
 
 
@@ -29,7 +30,7 @@ class Database(object):
             return self.client.drop_database(db_name)
 
 
-        def save_image(self, image):
+        def save_image(self, image, upsert=True):
 
             imgobject = {}
 
@@ -38,12 +39,19 @@ class Database(object):
                     imgobject[field] = image.location.serialize()
                 elif field == "files":
                     imgobject[field] = image.files.serialize()
+                elif field == "dropbox":
+                    imgobject[field] = image.dropbox.serialize()
                 elif not field == "id":
                     imgobject[field] = getattr(image, field)
 
+            imgobject["modified"] = datetime.datetime.utcnow()
 
-            self.images.update({"image_hash": image.image_hash}, {"$set": imgobject}, upsert=True)
+            if upsert:
+                self.images.update({"image_hash": image.image_hash}, {"$set": imgobject}, upsert=True)
+            else:
+                self.images.insert(imgobject)
             image.id = str(self.images.find({"image_hash":image.image_hash})[0]["_id"])
+            return image.id
 
         def get_image_from_id(self, id):
 
@@ -76,6 +84,16 @@ class Database(object):
                 records = self.images.find(query)
 
             return records
+
+        def get_dropbox_updates(self):
+            query = {
+                "$or":[
+                    {'modified':{'$gt':"dropbox.modified"}},
+                    {"dropbox.modified":None}
+                ]
+            }
+            return self.images.find(query)
+
 
         def get_images_in_album(self,album):
 

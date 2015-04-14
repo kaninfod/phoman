@@ -43,11 +43,12 @@ class TestIndexNewFile(unittest.TestCase):
     def test_run(self):
 
         test_file_path = os.path.join(self.src_files, "test_image_1.jpg")
-        result = index_jpeg_file(test_file_path)
-        self.assertTrue(os.path.exists(result.files.original_path))
-        self.assertTrue(os.path.exists(result.files.large_path))
-        self.assertTrue(os.path.exists(result.files.thumb_path))
-        self.assertTrue(os.path.exists(result.files.medium_path))
+        self.result = index_jpeg_file(test_file_path)
+
+        self.assertTrue(os.path.exists(self.result.files.original_path))
+        self.assertTrue(os.path.exists(self.result.files.large_path))
+        self.assertTrue(os.path.exists(self.result.files.thumb_path))
+        self.assertTrue(os.path.exists(self.result.files.medium_path))
 
 
 class TestIndexExistingFile(unittest.TestCase):
@@ -81,7 +82,7 @@ class TestIndexExistingFile(unittest.TestCase):
         result = index_jpeg_file(test_file_path)
 
         test_file_path = os.path.join(self.src_files, "test_image_2.jpg")
-        result = index_jpeg_file(test_file_path)
+        self.result = index_jpeg_file(test_file_path)
 
         self.assertTrue(os.path.exists(result.files.original_path))
         self.assertTrue(os.path.exists(result.files.large_path))

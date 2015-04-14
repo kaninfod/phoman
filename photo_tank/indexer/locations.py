@@ -7,7 +7,7 @@ from photo_tank.app import app
 
 images = app.db.get_images({'location.status':0})
 
-def do_loop():
+def location_watcher():
 
     for img in images:
         photo = Photo(img)
@@ -16,6 +16,4 @@ def do_loop():
         app.db.save_image(photo)
 
 if __name__ == "__main__":
-
-
-    do_loop()
+    location_watcher()

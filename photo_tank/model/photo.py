@@ -2,27 +2,9 @@
 from photo_tank.model.location import Location
 from photo_tank.model.files import Files
 from photo_tank.model.database import Database
+from photo_tank.model.dropbox_metadata import DropboxMetadata
 
 class Photo():
-
-
-
-    make = None
-    model = None
-    ImageUniqueID = None
-    has_exif = None
-    id = None
-    date_taken = None
-    original_height = None
-    original_width = None
-    orientation = None
-    flash_fired = None
-    tags = []
-    image_hash = None
-    links = {}
-    location = Location
-    files = Files
-
 
     db_fields = [
         "make",
@@ -30,6 +12,7 @@ class Photo():
         "ImageUniqueID",
         "has_exif",
         "id",
+        "modified",
         "date_taken",
         "original_height",
         "original_width",
@@ -39,14 +22,29 @@ class Photo():
         "image_hash",
         "links",
         "tags",
-        "files"
+        "files",
+        "dropbox"
     ]
 
     def __init__(self, image_source=None, image_id=None, update_location=False):
+        self.make = None
+        self.model = None
+        self.ImageUniqueID = None
+        self.has_exif = None
+        self.id = None
+        self.modified = None
+        self.date_taken = None
+        self.original_height = None
+        self.original_width = None
+        self.orientation = None
+        self.flash_fired = None
+        self.image_hash = None
+        self.links = {}
         self.tags = []
         self.location = Location()
         self.files = Files()
         self.db = Database()
+        self.dropbox = DropboxMetadata()
 
         if image_id:
             self.__mongo_populate__(self.db.get_image_from_id(image_id))
@@ -75,7 +73,8 @@ class Photo():
                 self.location.__mongo_populate__(record[field])
             elif field == "files":
                 self.files.__mongo_populate__(record[field])
-
+            elif field == "dropbox":
+                self.dropbox.__mongo_populate__(record[field])
             else:
                 setattr(self, field, record[field])
 
@@ -139,3 +138,5 @@ class Photo():
 
 
 
+    def __del__(self):
+        pass

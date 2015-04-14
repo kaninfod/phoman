@@ -2,17 +2,7 @@ __author__ = 'hingem'
 
 
 class Location():
-    status = None
-    latitude = None
-    longitude = None
-    location = False
-    country = None
-    state = None
-    address = None
-    road = None
-    city = None
-    suburb = None
-    postcode = None
+
     db_fields = [
         "status",
         "latitude",
@@ -36,7 +26,17 @@ class Location():
             setattr(self, field, record[field])
 
     def __init__(self):
-        pass
+        self.status = None
+        self.latitude = None
+        self.longitude = None
+        self.location = False
+        self.country = None
+        self.state = None
+        self.address = None
+        self.road = None
+        self.city = None
+        self.suburb = None
+        self.postcode = None
 
     def serialize(self):
         serial_dict ={}
