@@ -2,7 +2,9 @@ __author__ = 'hingem'
 
 import dropbox
 import os
-from photo_tank.model.database import Database
+from photo_tank.app import app
+
+
 from photo_tank.model.photo import Photo
 
 
@@ -54,12 +56,8 @@ def create_path(path, client):
 
 def put_photo(photo, client):
     try:
-
-
         path = get_paths(photo.files.original_subpath)
         dropbox_path = "{}/{}{}".format(path, photo.id, photo.files.extension)
-
-        #metadata = client.metadata(dropbox_path)
 
         if create_path(path, client):
 
@@ -79,16 +77,9 @@ def put_photo(photo, client):
     return True
 
 def update_to_dropbox():
-    DB_PORT = 27017
-    DB_HOST = 'localhost'
-    DB_NAME = 'pt2'
+    dropbox_client = login(app.config["DROPBOX_ACCESS_TOKEN"])
 
-    db = Database(port=DB_PORT, host=DB_HOST, db_name=DB_NAME)
-
-    access_token = 'UFefx_vmXWwAAAAAAAAK7WmXaQf6_uYnZQpJrP9bZ7uGWIaAdLQw8tiU4wYyBd1F'
-    dropbox_client = login(access_token)
-
-    cursor = db.get_dropbox_updates()
+    cursor = app.db.get_dropbox_updates()
     for rec in cursor:
         photo = Photo(image_id=rec["_id"])
         put_photo(photo, client=dropbox_client)

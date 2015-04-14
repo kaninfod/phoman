@@ -10,17 +10,6 @@ from photo_tank.model.Image_helper import *
 from photo_tank.app import app
 import errno
 
-def scan_files_mac():
-    os.system("")
-    path = app.config["IMAGE_STORE"]
-    for root, dirnames, filenames in os.walk(path):
-        for filename in filenames:
-            if os.path.splitext(filename)[1] == ".jpg":
-                fn = root + "/" + filename
-                app.logger.debug("scanning: %s" % filename)
-                img = Photo(fn)
-                app.logger.debug('indexed: %s with exif:%s, and id: %s' % (filename, img.has_exif, img.id))
-
 
 def index_watcher():
 
@@ -143,8 +132,6 @@ def new_image_file_handler(img, soruce_file):
         app.logger.error("Image was not found in DB but did exist in file system. Filename: %s" % img.files.original_path)
 
 
-
-
 def no_exif_file_handler(filepath):
     app.logger.info("This image (%s) has no EXIF data and has been left in %s" % (filepath, app.config["IMAGE_WATCH_FOLDER"]))
     pass
@@ -206,25 +193,5 @@ def ensure_dirs_exist(dirname):
 
 if __name__ == "__main__":
 
-
-    parser = argparse.ArgumentParser(description='Process some integers.')
-
-    parser.add_argument('--files', dest='files', action='store_true',
-                        help='sum the integers (default: find the max)')
-
-    parser.add_argument('--mac', dest='mac', action='store_true',
-                        help='sum the integers (default: find the max)')
-
-    parser.add_argument('--locations', dest='locations', action='store_true',
-                        help='sum the integers (default: find the max)')
-
-    args = parser.parse_args()
-
-    if args.files:
-        pass
-        #scan_files()
-    elif args.locations:
-        pass
-    elif args.mac:
         index_watcher()
 
