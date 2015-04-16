@@ -4,6 +4,8 @@ from photo_tank.model.files import Files
 from photo_tank.model.database import Database
 from photo_tank.model.dropbox_metadata import DropboxMetadata
 from datetime import datetime
+import os
+from enum import Enum
 
 class Photo():
 
@@ -24,8 +26,15 @@ class Photo():
         "links",
         "tags",
         "files",
-        "dropbox"
+        "dropbox",
+        "status"
     ]
+
+    class Status(Enum):
+        stored = 1
+        invisible = 2
+        deleted = 3
+        unknown = 4
 
     def __init__(self, image_source=None, image_id=None, update_location=False):
         self.make = None
@@ -40,6 +49,7 @@ class Photo():
         self.orientation = None
         self.flash_fired = None
         self.image_hash = None
+        self.status = Photo.Status.unknown
         self.links = {}
         self.tags = []
         self.location = Location()
@@ -47,49 +57,60 @@ class Photo():
         self.db = Database()
         self.dropbox = DropboxMetadata()
 
+
         if image_id:
-            self.__mongo_populate__(self.db.get_image_from_id(image_id))
+            self.populate(self.db.get_photo_from_id(image_id))
 
-        else:
-            if isinstance(image_source, str):
-                return
-                #self._image_from_file(image_source)
+        elif isinstance(image_source, dict):
+                self.populate(image_source)
 
-            elif isinstance(image_source, dict):
-                self.__mongo_populate__(image_source)
-
-
-    def __mongo_attributes__(self):
+    def set_attributes(self):
         return [i for i in self.db_fields]
 
-    def __mongo_save__(self):
-        self.db.save_image(self)
+    def save(self):
+        self.db.save_photo(self)
 
-    def __mongo_populate__(self, record):
+    def populate(self, record):
+        if record:
+            for field in record:
 
-        for field in record:
-            if field == "_id":
-                setattr(self, "id", str(record["_id"]))
-            elif field == "location":
-                self.location.__mongo_populate__(record[field])
-            elif field == "files":
-                self.files.__mongo_populate__(record[field])
-            elif field == "dropbox":
-                self.dropbox.__mongo_populate__(record[field])
-            else:
-                setattr(self, field, record[field])
+                if field == "_id":
+                    setattr(self, "id", str(record["_id"]))
+
+                elif field == "location":
+                    self.location.populate(record[field])
+
+                elif field == "files":
+                    self.files.populate(record[field])
+
+                elif field == "dropbox":
+                    self.dropbox.populate(record[field])
+
+                elif field == "status":
+                    setattr(self, field, self.Status(record[field]))
+
+                else:
+                    setattr(self, field, record[field])
 
     def serialize(self):
         serial_dict ={}
-        for field in self.__mongo_attributes__():
+        for field in [i for i in self.db_fields]:
+
             if field == "location":
                 serial_dict[field] = self.location.serialize()
+
             elif field == "files":
                 serial_dict[field] = self.files.serialize()
+
             elif field == "dropbox":
                 serial_dict[field] = self.dropbox.serialize()
+
             elif field == "modified":
                 serial_dict["modified"] = datetime.utcnow()
+
+            elif field == "status":
+                serial_dict["status"] = self.status.value
+
             elif not field == "id":
                 serial_dict[field] = getattr(self, field)
 
@@ -103,7 +124,6 @@ class Photo():
             }
 
         )
-
 
     def set_tags(self):
 
@@ -148,6 +168,29 @@ class Photo():
             self.tags.append({"category": category, "value":  self.location.state})
         if not self.location.status == 1:
             self.tags.append({"category": category, "value":  "No Location"})
+
+
+    def delete(self):
+
+        #delete in webimages
+        os.remove(self.files.thumb_path)
+        os.remove(self.files.medium_path)
+        os.remove(self.files.large_path)
+        #delete original
+        os.remove(self.files.original_path)
+        #delete in dropbox
+
+        #delete in db
+        self.status = self.Status.deleted
+
+        #clean up empty folders
+
+        self.save()
+
+    def invisible(self, state):
+
+        self.status = self.Status.invisible
+        self.save()
 
     def __str__(self):
         return self.original_path

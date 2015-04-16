@@ -5,7 +5,7 @@ from photo_tank.model.database import Database
 
 from flask import Flask
 app = Flask(__name__)
-app.config.from_pyfile('../phototank.conf')
+app.config.from_pyfile('../conf/phototank.conf')
 
 DB_PORT = app.config["DB_PORT"]
 DB_HOST = app.config["DB_HOST"]

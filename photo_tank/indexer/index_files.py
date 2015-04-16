@@ -5,7 +5,6 @@ from shutil import move
 import argparse
 
 from photo_tank.model.photo import Photo
-
 from photo_tank.model.Image_helper import *
 from photo_tank.app import app
 import errno
@@ -45,6 +44,7 @@ def index_watcher():
     app.logger.info("Indexing of %s ended" % app.config["IMAGE_WATCH_FOLDER"])
 
 def index_jpeg_file(input_file_path):
+
     # split file path into path, filename and extension
     p, input_file = os.path.split(input_file_path)
     input_file, input_ext = os.path.splitext(input_file)
@@ -76,8 +76,8 @@ def new_image_file_handler(img, soruce_file):
     if not existing_record:
             existing_record = app.db.locate_image("files.filename", img.files.filename)
 
-    #save photo to get id
-    app.db.save_image(img, upsert=False)
+    #save photo to get id. Upsert is false meaning that if similar record exists we till create duplicate
+    app.db.save_photo(img, upsert=False)
 
     # set basic paths
     img.files.original_subpath = get_path_from_date(app.config["IMAGE_STORE"], img.date_taken)
@@ -107,7 +107,6 @@ def new_image_file_handler(img, soruce_file):
             # links:
             #     1: images are digitally the same
             #     2: images has alike time stamps but size differs
-
             if not existing_image.files.size == img.files.size:
                 app.logger.debug("An image with this exact timestamp already exists in the system but "
                                  "has a different file size. A duplicate has been added to %s" % img.files.original_path)
@@ -121,11 +120,11 @@ def new_image_file_handler(img, soruce_file):
                 existing_image.add_link(img.id, 1)
 
             #save any changes made to the existing photo
-            app.db.save_image(existing_image)
+            app.db.save_photo(existing_image)
 
         #set tags and save photo
         img.set_tags()
-        app.db.save_image(img)
+        app.db.save_photo(img)
         app.logger.debug("New image was saved to DB and path: %s" % img.files.original_path)
 
     else:

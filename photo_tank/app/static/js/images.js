@@ -56,17 +56,17 @@ $(document).ready(function() {
 
     $(".photo-tick").click(function() {
 
-        selected_images = get_selected_images()
+        selected_images = get_selected_images();
 
-        group = $(this).parent()
+        group = $(this).parent();
 
-        untick = group.children(".fa-circle-o")
-        tick = group.children(".fa-check-circle-o")
-        img = group.children("img")
-        id = img.attr("id")
+        untick = group.children(".fa-circle-o");
+        tick = group.children(".fa-check-circle-o");
+        img = group.children("img");
+        id = img.attr("id");
 
-        untick.toggle()
-        tick.toggle()
+        untick.toggle();
+        tick.toggle();
 
         var index = selected_images.indexOf(id);
         if (index > -1) {
@@ -75,7 +75,7 @@ $(document).ready(function() {
             selected_images.push(id)
         }
 
-        sessionStorage["selected_images"] = JSON.stringify(selected_images)
+        sessionStorage["selected_images"] = JSON.stringify(selected_images);
         show_selected()
     });
 
@@ -87,7 +87,7 @@ $(document).ready(function() {
         if (album_id !== 'None') {
             submit_album()
         }
-    })
+    });
 
     function get_included_keywords() {
         outer_div = $("#accordion");
@@ -123,20 +123,20 @@ $(document).ready(function() {
 
     function update_ticks() {
 
-        selected_images = get_selected_images()
+        selected_images = get_selected_images();
 
         for (var i = 0; i < selected_images.length; i++) {
-            id = selected_images[i]
-            console.log(id)
-            img = $(document.getElementById(id))
+            id = selected_images[i];
+            console.log(id);
+            img = $(document.getElementById(id));
 
             if (img.length > 0) {
-                group = img.parent()
+                group = img.parent();
 
-                untick = group.children(".fa-circle-o")
-                tick = group.children(".fa-check-circle-o")
+                untick = group.children(".fa-circle-o");
+                tick = group.children(".fa-check-circle-o");
 
-                untick.toggle()
+                untick.toggle();
                 tick.toggle()
             }
         }
@@ -144,10 +144,10 @@ $(document).ready(function() {
 
     function show_selected() {
 
-        selected_images = get_selected_images()
-        element = $(document.getElementById("selected"))
+        selected_images = get_selected_images();
+        element = $(document.getElementById("selected"));
         if (selected_images.length >    0) {
-            element.show()
+            element.show();
             element.text(selected_images.length)
         } else {
             element.hide()
@@ -188,8 +188,8 @@ $(document).ready(function() {
     }
 
 
-    update_ticks()
-    show_selected()
+    update_ticks();
+    show_selected();
 
     album_id = sessionStorage["album_id"]
-})
+});

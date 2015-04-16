@@ -2,7 +2,7 @@
 .idea
 
 
-photo_tank/phototank.conf
+photo_tank/conf/phototank.conf
 
 #mongo
 mongo_data
