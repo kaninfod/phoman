@@ -190,6 +190,6 @@ $(document).ready(function() {
 
     update_ticks();
     show_selected();
-
+    panel = $(".panel-heading").children("a").attr("id")
     album_id = sessionStorage["album_id"]
 });

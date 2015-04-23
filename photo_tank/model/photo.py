@@ -127,47 +127,68 @@ class Photo():
 
     def set_tags(self):
 
+        def append_tag(category, subcategory, sortorder, value):
+            self.tags.append({"category": category,"subcategory": subcategory,"sortorder": sortorder, "value": value})
+
         self.tags = []
 
         #time tags
         category = "Time"
-        self.tags.append({"category": category, "value": self.date_taken.strftime("%B")})
-        self.tags.append({"category": category, "value":  self.date_taken.strftime("%Y")})
-        self.tags.append({"category": category, "value":  self.date_taken.strftime("%A")})
-        self.tags.append({"category": category, "value":  "Week " + self.date_taken.strftime("%U")})
+        append_tag(category, "Years",0,self.date_taken.strftime("%Y"))
+        append_tag(category, "Months",1,self.date_taken.strftime("%B"))
+        append_tag(category, "Weeks", 2, "Week " + self.date_taken.strftime("%U"))
+        append_tag(category, "Weekdays",3,self.date_taken.strftime("%A"))
 
         if 5 <= self.date_taken.hour < 12:
-            self.tags.append({"category": category, "value": "Morning"})
+            append_tag(category, "Time of day",4,self.date_taken.strftime("Morning"))
+
         if 12 <= self.date_taken.hour < 17:
-            self.tags.append({"category": category, "value": "Afternoon"})
+            append_tag(category, "Time of day",5,self.date_taken.strftime("Afternoon"))
+
         if 17 <= self.date_taken.hour < 23:
-            self.tags.append({"category": category, "value":  "Evening"})
+            append_tag(category, "Time of day",6,self.date_taken.strftime("Evening"))
+
         if 23 <= self.date_taken.hour < 5:
-            self.tags.append({"category": category, "value":  "Night"})
+            append_tag(category, "Time of day",7,self.date_taken.strftime("Night"))
+
 
         category = "Camera"
-        self.tags.append({"category": category, "value":  self.model})
-        self.tags.append({"category": category, "value":  self.make})
+        append_tag(category, "Details",0,self.model)
+
+        append_tag(category, "Details",1,self.make)
+
 
 
         category = "File"
         if not self.has_exif:
-            self.tags.append({"category": category, "value":  "No EXIF"})
+            append_tag(category, "Details",0, "No Exif")
 
         if self.files.size <= 1024000:
-            self.tags.append({"category": category, "value":  "Small file"})
-        if 1024000 < self.files.size < 3600000:
-            self.tags.append({"category": category, "value":  "Medium file"})
-        if self.files.size >= 3600000:
-            self.tags.append({"category": category, "value":  "Large file"})
+            append_tag(category, "Size", 1, "Small File")
 
-        category = "Location"
+        if 1024000 < self.files.size < 3600000:
+            append_tag(category, "Size", 2, "Meduim File")
+
+        if self.files.size >= 3600000:
+            append_tag(category, "Size", 3, "Large File")
+
+
+        category = "Places"
         if self.location.country:
-            self.tags.append({"category": category, "value":  self.location.country})
+            append_tag(category, "Country", 0, self.location.country)
+
         if self.location.state:
-            self.tags.append({"category": category, "value":  self.location.state})
+            append_tag(category, "State", 1, self.location.state)
+
+        if self.location.city:
+            append_tag(category, "City", 2, self.location.city)
+
+        if self.location.suburb:
+            append_tag(category, "Suburb", 3, self.location.suburb)
+
         if not self.location.status == 1:
-            self.tags.append({"category": category, "value":  "No Location"})
+            append_tag(category, "Location", 4, "No Location")
+
 
 
     def delete(self):

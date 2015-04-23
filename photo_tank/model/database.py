@@ -2,8 +2,8 @@ __author__ = 'hingem'
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-class Database(object):
 
+class Database(object):
     class __singleton:
 
         def __init__(self, host=None, port=None, db_name=None):
@@ -18,7 +18,7 @@ class Database(object):
             return self.val
 
         def reinitialize(self, host=None, port=None, db_name=None):
-            self.__init__(host=host,port=port,db_name=db_name)
+            self.__init__(host=host, port=port, db_name=db_name)
 
         def drop_collection(self, collection_name):
             return self.connection.drop_collection(collection_name)
@@ -35,18 +35,27 @@ class Database(object):
                 self.images.update({"image_hash": photo.image_hash}, {"$set": record}, upsert=True)
             else:
                 self.images.insert(record)
-            photo.id = str(self.images.find({"image_hash":photo.image_hash})[0]["_id"])
+            photo.id = str(self.images.find({"image_hash": photo.image_hash})[0]["_id"])
 
             return photo.id
 
         def get_photo_from_id(self, id):
-            pass
-            record = self.images.find_one({'_id': ObjectId(id), "status":{"$lt":2}})
+
+            record = self.images.find_one({'_id': ObjectId(id), "status": {"$lt": 2}})
             return record
 
         def get_keywords(self):
+            keywords = {}
+            keywords = self.images.distinct('tags').sort("tags", 1)
 
-            keywords = self.images.distinct('tags')
+            uniq = []
+            dubs = []
+            for x in keywords:
+                if x["value"] not in uniq:
+                    uniq.append(x["value"])
+                else:
+                    dubs.append(x)
+            [keywords.remove(item) for item in dubs ]
             return keywords
 
         def get_keyword_categories(self):
@@ -63,7 +72,7 @@ class Database(object):
         def get_photos(self, query=None, sort_by=None, sort_direction=None):
 
             if sort_by:
-                records = self.images.find(query, {"date_taken":1}).sort(sort_by,1)
+                records = self.images.find(query, {"date_taken": 1}).sort(sort_by, 1)
             else:
                 records = self.images.find(query)
 
@@ -71,48 +80,45 @@ class Database(object):
 
         def get_dropbox_updates(self):
             query = {
-                "$or":[
-                    {'modified':{'$gt':"dropbox.modified"}},
-                    {"dropbox.modified":None}
+                "$or": [
+                    {'modified': {'$gt': "dropbox.modified"}},
+                    {"dropbox.modified": None}
                 ]
             }
             return self.images.find(query)
 
-
-        def get_images_in_album(self,album):
+        def get_images_in_album(self, album):
 
             query_string = {}
             list_of_ids = []
 
             if album.tags_exclude or album.tags_include:
                 query_string.update({
-                    '$and':[
-                        {'tags.value':{'$in':album.tags_include}},
-                        {'tags.value':{'$nin':album.tags_exclude}}
+                    '$and': [
+                        {'tags.value': {'$in': album.tags_include}},
+                        {'tags.value': {'$nin': album.tags_exclude}}
                     ]})
-                cursor = self.images.find(query_string, {"_id":1} )
+                cursor = self.images.find(query_string, {"_id": 1})
                 list_of_ids = [str(record['_id']) for record in cursor]
             if len(album.selected) > 0:
-                list_of_ids.append(album.selected)
-
-
+                list_of_ids.extend(album.selected)
 
             if album.startdate and album.enddate:
                 query_string.update({
-                    '$and':[
-                            {'date_taken':{'$gte':album.startdate}},
-                            {'date_taken':{'$lte':album.enddate}}
-                            ]
-                    })
+                    '$and': [
+                        {'date_taken': {'$gte': album.startdate}},
+                        {'date_taken': {'$lte': album.enddate}}
+                    ]
+                })
 
-                cursor = self.images.find(query_string, {"_id":1} )
+                cursor = self.images.find(query_string, {"_id": 1})
                 list_of_ids = [str(record['_id']) for record in cursor]
 
-            if not (album.startdate or album.enddate) and not (album.tags_exclude or album.tags_include) and len(album.selected) == 0:
-                cursor = self.images.find({}, {"_id":1} )
+            if not (album.startdate or album.enddate) and not (album.tags_exclude or album.tags_include) and len(
+                    album.selected) == 0:
+                cursor = self.images.find({}, {"_id": 1})
                 ids = [str(record['_id']) for record in cursor]
                 list_of_ids.extend(ids)
-                #list_of_ids.append(ids)
 
             album.image_count = len(list_of_ids)
             self.albums.update({"_id": album.id}, {"$set": {"image_count": album.image_count}}, upsert=False)
@@ -152,13 +158,12 @@ class Database(object):
 
         def delete_album(self, album_id, query):
 
-            query.update({"_id":ObjectId(album_id)})
+            query.update({"_id": ObjectId(album_id)})
             r = self.albums.remove(query)
 
 
-
-
     instance = None
+
     def __new__(cls, host=None, port=None, db_name=None):
         if not Database.instance:
             Database.instance = Database.__singleton(host=host, port=port, db_name=db_name)
