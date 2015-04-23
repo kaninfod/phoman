@@ -1,6 +1,7 @@
 #!flask/bin/python
-import optparse
 from photo_tank.app import app
+
+import optparse
 
 
 __port = 701

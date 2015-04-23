@@ -1,10 +1,11 @@
+#!flask/bin/python
 __author__ = 'hingem'
 
-
+from photo_tank.app import app
+from photo_tank.bin.daemon import Daemon
 import sys
 
-from photo_tank.bin.daemon import Daemon
-from photo_tank.app import app
+
 
 
 class MyDaemon(Daemon):
@@ -20,6 +21,14 @@ class MyDaemon(Daemon):
         IOLoop.instance().start()
 
 if __name__ == "__main__":
+
+    import os
+    try:
+        user_paths = os.environ['PYTHONPATH'].split(os.pathsep)
+        print(user_paths)
+    except KeyError:
+        user_paths = []
+
     daemon = MyDaemon('/tmp/phomand.pid')
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
