@@ -32,7 +32,7 @@ class Database(object):
             record = photo.serialize()
 
             if upsert:
-                self.images.update({"image_hash": photo.image_hash}, {"$set": record}, upsert=True)
+                res = self.images.update({"image_hash": photo.image_hash}, {"$set": record}, upsert=True)
             else:
                 self.images.insert(record)
             photo.id = str(self.images.find({"image_hash": photo.image_hash})[0]["_id"])
@@ -46,7 +46,7 @@ class Database(object):
 
         def get_keywords(self):
             keywords = {}
-            keywords = self.images.distinct('tags').sort("tags", 1)
+            keywords = self.images.distinct('tags')
 
             uniq = []
             dubs = []
@@ -56,7 +56,7 @@ class Database(object):
                 else:
                     dubs.append(x)
             [keywords.remove(item) for item in dubs ]
-            return keywords
+            return sorted(keywords, key=lambda k: k['sortorder'])
 
         def get_keyword_categories(self):
 
