@@ -58,6 +58,7 @@ def images(album_id, page):
     perPage = 24
     pagination = Pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
+    alb.get_images()
 
     return render_template('image_viewer/images.html',
                            paginator=pagination,

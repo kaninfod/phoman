@@ -87,42 +87,53 @@ class Database(object):
             }
             return self.images.find(query)
 
-        def get_images_in_album(self, album):
+        def image_count(self, album):
+            if album.selected or album.tags_exclude or album.tags_include or album.startdate or album.enddate:
+                query_string = {
+                    '$or': [
+                        {'_id': {'$in': album.selected}},
 
-            query_string = {}
-            list_of_ids = []
-
-            if album.tags_exclude or album.tags_include:
-                query_string.update({
-                    '$and': [
-                        {'tags.value': {'$in': album.tags_include}},
-                        {'tags.value': {'$nin': album.tags_exclude}}
-                    ]})
-                cursor = self.images.find(query_string, {"_id": 1})
-                list_of_ids = [str(record['_id']) for record in cursor]
-            if len(album.selected) > 0:
-                list_of_ids.extend(album.selected)
-
-            if album.startdate and album.enddate:
-                query_string.update({
-                    '$and': [
-                        {'date_taken': {'$gte': album.startdate}},
-                        {'date_taken': {'$lte': album.enddate}}
+                        {'$and': [
+                            {'tags.value': {'$in': album.tags_include}},
+                            {'tags.value': {'$nin': album.tags_exclude}}
+                        ]},
+                        {'$and': [
+                            {'date_taken': {'$gte': album.startdate}},
+                            {'date_taken': {'$lte': album.enddate}}
+                        ]}
                     ]
-                })
+                }
+            else:
+                query_string = {    }
+            return self.images.find(query_string).count()
 
-                cursor = self.images.find(query_string, {"_id": 1})
-                list_of_ids = [str(record['_id']) for record in cursor]
 
-            if not (album.startdate or album.enddate) and not (album.tags_exclude or album.tags_include) and len(
-                    album.selected) == 0:
-                cursor = self.images.find({}, {"_id": 1})
-                ids = [str(record['_id']) for record in cursor]
-                list_of_ids.extend(ids)
+        def get_images_in_album(self, album, skip=0, limit=0):
+            if album.selected or album.tags_exclude or album.tags_include or album.startdate or album.enddate:
+                query_string = {
+                    '$or': [
+                        {'_id': {'$in': album.selected}},
 
-            album.image_count = len(list_of_ids)
+                        {'$and': [
+                            {'tags.value': {'$in': album.tags_include}},
+                            {'tags.value': {'$nin': album.tags_exclude}}
+                        ]},
+                        {'$and': [
+                            {'date_taken': {'$gte': album.startdate}},
+                            {'date_taken': {'$lte': album.enddate}}
+                        ]}
+                    ]
+                }
+            else:
+                query_string = {    }
+            cursor = self.images.find(query_string).sort("date_taken", 1).skip(skip).limit(limit)
+            album._image_count = cursor.count()
             self.albums.update({"_id": album.id}, {"$set": {"image_count": album.image_count}}, upsert=False)
-            return list_of_ids
+            return cursor
+
+        def album_cur(self, id):
+            cur = self.images.find()
+            return cur
 
         def save_album(self, album):
 

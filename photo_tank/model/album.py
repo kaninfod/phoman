@@ -15,14 +15,19 @@ class Album():
         self.name = ""
         self.type = {}
         self.id = album_id
-        self.image_count = ""
-        self.image_collection = []
+        self._image_count = ""
+        self.image_collection = None
         self._paginator = None
         self._position = 0
         self.db = Database()
 
         if album_id:
             self._get_collection()
+
+    @property
+    def image_count(self):
+        self._image_count = self.db.image_count(self)
+        return self._image_count
 
 
     @property
@@ -43,13 +48,15 @@ class Album():
         if self.image_collection:
             self._position += 1
             if self._paginator:
-                if self._position - 1 < self.paginator.max_rec:
-                    return Photo(image_id=self.image_collection[self._position-1])
+                if self._position < self.paginator.max_rec:
+                    r = next(self.image_collection)
+                    p = Photo(r)
+                    return p
                 else:
                     raise StopIteration()
             else:
-                if self._position <= len(self.image_collection):
-                    return Photo(image_id=self.image_collection[self._position-1])
+                if self._position <= self.image_collection.count():
+                    return Photo(image_id=next(self.image_collection))
                 else:
                     raise StopIteration()
 
@@ -77,11 +84,13 @@ class Album():
                 self.selected_only = record["selected_only"]
                 self.selected = record["selected"]
                 self.type = record["type"]
-                self._get_images()
+                #self._get_images()
 
     def _get_images(self):
         self.image_collection = self.db.get_images_in_album(self)
 
+    def get_images(self):
+        self.image_collection = self.db.get_images_in_album(self, skip=self.paginator.min_rec, limit=self.paginator.per_page)
 
     def save(self):
         self.db.save_album(self)
