@@ -56,7 +56,8 @@ class Database(object):
                 else:
                     dubs.append(x)
             [keywords.remove(item) for item in dubs ]
-            return sorted(keywords, key=lambda k: k['sortorder'])
+            return keywords
+            #return sorted(keywords, key=lambda k: k['sortorder'])
 
         def get_keyword_categories(self):
 
@@ -128,7 +129,7 @@ class Database(object):
                 query_string = {    }
             cursor = self.images.find(query_string).sort("date_taken", 1).skip(skip).limit(limit)
             album._image_count = cursor.count()
-            self.albums.update({"_id": album.id}, {"$set": {"image_count": album.image_count}}, upsert=False)
+            self.albums.update({"_id": album.id}, {"$set": {"image_count": album._image_count}}, upsert=False)
             return cursor
 
         def album_cur(self, id):
