@@ -2,13 +2,12 @@ import os
 
 
 from flask import request,  url_for, send_file, jsonify, render_template, session, redirect
-
 from photo_tank.app import app
 from photo_tank.model.album import Album
 from photo_tank.model.photo import Photo
 from photo_tank.model.database import Database
 from photo_tank.model.common import Pagination
-
+import time
 db = Database()
 
 
@@ -43,7 +42,7 @@ def showlarge(size, id):
 @app.route('/image/album/<album_id>', defaults={'page': 1}, methods=['GET', 'POST'])
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
-
+    ts = time.clock()
     if not album_id:
         alb = Album()
         alb.name = "__temp__"
@@ -55,11 +54,12 @@ def images(album_id, page):
         return redirect("/image/album/" + alb.id)
     else:
         alb = Album(album_id)
+    app.logger.debug("test {}".format((time.clock() - ts)*1000))
     perPage = 24
     pagination = Pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
     alb.get_images()
-
+    app.logger.debug("test {}".format((time.clock() - ts)*1000))
     return render_template('image_viewer/images.html',
                            paginator=pagination,
                            album = alb,
