@@ -54,17 +54,21 @@ def images(album_id, page):
         return redirect("/image/album/" + alb.id)
     else:
         alb = Album(album_id)
-    app.logger.debug("test {}".format((time.clock() - ts)*1000))
+    app.logger.debug("set album {}".format((time.clock() - ts)*1000))
     perPage = 24
     pagination = Pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
     alb.get_images()
-    app.logger.debug("test {}".format((time.clock() - ts)*1000))
+    app.logger.debug("get images {}".format((time.clock() - ts)*1000))
+    kw = db.get_keywords()
+    app.logger.debug("get kw {}".format((time.clock() - ts)*1000))
+    ct = db.get_keyword_categories()
+    app.logger.debug("cats {}".format((time.clock() - ts)*1000))
     return render_template('image_viewer/images.html',
                            paginator=pagination,
                            album = alb,
-                           keywords=db.get_keywords(),
-                           categories=db.get_keyword_categories()
+                           keywords=kw,
+                           categories=ct
                            )
 
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
