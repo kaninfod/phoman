@@ -2,7 +2,6 @@ __author__ = 'hingem'
 
 
 from shutil import move
-import argparse
 
 from photo_tank.model.photo import Photo
 from photo_tank.model.Image_helper import *
@@ -189,6 +188,15 @@ def ensure_dirs_exist(dirname):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def set_keywords():
+    records = app.db.get_photos({})
+    for rec in records:
+        photo = Photo(rec)
+        photo.set_tags()
+        photo.save()
+
 
 if __name__ == "__main__":
 

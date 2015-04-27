@@ -11,7 +11,7 @@ DB_PORT = app.config["DB_PORT"]
 DB_HOST = app.config["DB_HOST"]
 DB_NAME = app.config["DB_NAME"]
 app.db = Database(port=DB_PORT, host=DB_HOST, db_name=DB_NAME)
-
+#app.db.initialize_db()
 
 filehandler = logging.FileHandler(app.config["LOG_PATH"])
 filehandler.setLevel(app.config["LOG_LEVEL"])

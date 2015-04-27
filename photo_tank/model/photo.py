@@ -128,7 +128,14 @@ class Photo():
     def set_tags(self):
 
         def append_tag(category, subcategory, sortorder, value):
-            self.tags.append({"category": category,"subcategory": subcategory,"sortorder": sortorder, "value": value})
+            keyword = {
+                "value": value,
+                "category": category,
+                "subcategory": subcategory,
+                "sortorder": sortorder
+            }
+            self.db.create_keyword(keyword)
+            #self.tags.append({"category": category,"subcategory": subcategory,"sortorder": sortorder, "value": value})
 
         self.tags = []
 

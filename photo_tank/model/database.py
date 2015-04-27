@@ -13,6 +13,7 @@ class Database(object):
 
             self.images = self.connection['images']
             self.albums = self.connection['albums']
+            self.keywords = self.connection['keywords']
 
         def __str__(self):
             return self.val
@@ -25,6 +26,23 @@ class Database(object):
 
         def drop_database(self, db_name):
             return self.client.drop_database(db_name)
+
+        def initialize_db(self):
+            from pymongo import ASCENDING, DESCENDING
+            collections = self.connection.collection_names()
+            if not "keywords" in collections:
+                self.connection.create_collection("keywords")
+            self.keywords.create_index( { "keywords": 1 }, { "unique": True } )
+
+
+        def create_keyword(self, keyword):
+
+            try:
+                result = self.keywords.update({"value":keyword["value"]},{"$set": keyword}, upsert=True)
+                pass
+            except Exception as e:
+                print(e)
+
 
 
         def save_photo(self, photo, upsert=True):
@@ -45,23 +63,15 @@ class Database(object):
             return record
 
         def get_keywords(self):
-            keywords = {}
-            keywords = self.images.distinct('tags')
 
-            uniq = []
-            dubs = []
-            for x in keywords:
-                if x["value"] not in uniq:
-                    uniq.append(x["value"])
-                else:
-                    dubs.append(x)
-            [keywords.remove(item) for item in dubs ]
+            keywords = self.keywords.find({}).sort("category", 1)
+
             return keywords
-            #return sorted(keywords, key=lambda k: k['sortorder'])
+
 
         def get_keyword_categories(self):
 
-            keywords = self.images.distinct('tags.category')
+            keywords = self.keywords.distinct('category')
             return keywords
 
         def locate_image(self, field, value):
