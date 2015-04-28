@@ -9,12 +9,20 @@ from photo_tank.app import app
 import errno
 
 
+
+
+
+
 def index_watcher():
+    for path in app.config["IMAGE_WATCH_FOLDER"]:
+        index_path(path)
+
+def index_path(path):
 
     os.system("")
-    path = app.config["IMAGE_WATCH_FOLDER"]
 
-    app.logger.info("Indexing of %s initiated" % app.config["IMAGE_WATCH_FOLDER"])
+
+    app.logger.info("Indexing of %s initiated" % path)
     for root, dirnames, filenames in os.walk(path):
         for filename in filenames:
 
@@ -193,11 +201,13 @@ def ensure_dirs_exist(dirname):
 def set_keywords():
     records = app.db.get_photos({})
     for rec in records:
-        photo = Photo(rec)
-        photo.tags = []
-        photo.set_tags()
-        photo.save()
-
+        try:
+            photo = Photo(rec)
+            photo.tags = []
+            photo.set_tags()
+            photo.save()
+        except Exception as e:
+            app.logger.critical("failed setting tags: %s" % photo.id)
 
 if __name__ == "__main__":
 

@@ -4,7 +4,7 @@ __author__ = 'hingem'
 import sys
 
 from photo_tank.bin.daemon import Daemon
-from photo_tank.indexer.index_files import index_watcher
+from photo_tank.indexer.index_files import index_watcher, set_keywords
 from photo_tank.indexer.index_locations import location_watcher
 import sched
 import time
@@ -23,6 +23,8 @@ class MyDaemon(Daemon):
 
     def run_watcher(self):
 
+        self.logger.warning("starting keyword indexer..." + str(time.time()))
+        set_keywords()
         self.logger.warning("starting file indexer..." + str(time.time()))
         index_watcher()
         self.logger.warning("starting location indexer..." + str(time.time()))
