@@ -60,15 +60,14 @@ def images(album_id, page):
     alb.paginator = pagination
     alb.get_images()
     app.logger.debug("get images {}".format((time.clock() - ts)*1000))
+
     kw = db.get_keywords()
     app.logger.debug("get kw {}".format((time.clock() - ts)*1000))
-    ct = db.get_keyword_categories()
-    app.logger.debug("cats {}".format((time.clock() - ts)*1000))
+
     return render_template('image_viewer/images.html',
                            paginator=pagination,
                            album = alb,
-                           keywords=kw,
-                           categories=ct
+                           keywords=kw
                            )
 
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])

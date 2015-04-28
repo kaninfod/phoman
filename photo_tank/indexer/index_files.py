@@ -194,6 +194,7 @@ def set_keywords():
     records = app.db.get_photos({})
     for rec in records:
         photo = Photo(rec)
+        photo.tags = []
         photo.set_tags()
         photo.save()
 

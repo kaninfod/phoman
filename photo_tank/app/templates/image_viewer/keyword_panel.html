@@ -32,12 +32,12 @@
 
                     <div class="dropdown">
                         <a href="#" data-toggle="dropdown" class="dropdown-toggle">
-                                {% if keyword['value'] in album.tags_include %}
-                                   <span grouping="{{ keyword['category'] }}.{{ keyword['subcategory'] }}.{{ keyword['sortorder'] }}" id="{{ keyword['value'] }}" include  class="badge badge-success">{{ keyword['value'] }}</span>
-                                {% elif  keyword['value'] in album.tags_exclude%}
-                                   <span grouping="{{ keyword['category'] }}.{{ keyword['subcategory'] }}.{{ keyword['sortorder'] }}" id="{{ keyword['value'] }}" exclude  class="badge badge-danger">{{ keyword['value'] }}</span>
+                                {% if keyword['_id'] in album.tags_include %}
+                                   <span grouping="{{ keyword['category'] }}.{{ keyword['subcategory'] }}.{{ keyword['sortorder'] }}" id="{{ keyword['_id'] }}" include  class="badge badge-success">{{ keyword['value'] }}</span>
+                                {% elif  keyword['_id'] in album.tags_exclude%}
+                                   <span grouping="{{ keyword['category'] }}.{{ keyword['subcategory'] }}.{{ keyword['sortorder'] }}" id="{{ keyword['_id'] }}" exclude  class="badge badge-danger">{{ keyword['value'] }}</span>
                                 {% else %}
-                                   <span grouping="{{ keyword['category'] }}.{{ keyword['subcategory'] }}.{{ keyword['sortorder'] }}" id="{{ keyword['value'] }}" class="badge">{{ keyword['value'] }}</span>
+                                   <span grouping="{{ keyword['category'] }}.{{ keyword['subcategory'] }}.{{ keyword['sortorder'] }}" id="{{ keyword['_id'] }}" class="badge">{{ keyword['value'] }}</span>
                                 {% endif %}
                         </a>
                         <ul class="dropdown-menu">

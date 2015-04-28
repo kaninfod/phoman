@@ -39,7 +39,12 @@ class Database(object):
 
             try:
                 result = self.keywords.update({"value":keyword["value"]},{"$set": keyword}, upsert=True)
-                pass
+                keyword_id = self.keywords.find({"value":keyword["value"]})
+                if keyword_id:
+                    return keyword_id[0]["_id"]
+                else:
+                    return 0
+
             except Exception as e:
                 print(e)
 
@@ -100,13 +105,14 @@ class Database(object):
 
         def image_count(self, album):
             if album.selected or album.tags_exclude or album.tags_include or album.startdate or album.enddate:
+
                 query_string = {
                     '$or': [
                         {'_id': {'$in': album.selected}},
 
                         {'$and': [
-                            {'tags.value': {'$in': album.tags_include}},
-                            {'tags.value': {'$nin': album.tags_exclude}}
+                            {'tags': {'$in': album.tags_include}},
+                            {'tags': {'$nin': album.tags_exclude}}
                         ]},
                         {'$and': [
                             {'date_taken': {'$gte': album.startdate}},
@@ -126,8 +132,8 @@ class Database(object):
                         {'_id': {'$in': album.selected}},
 
                         {'$and': [
-                            {'tags.value': {'$in': album.tags_include}},
-                            {'tags.value': {'$nin': album.tags_exclude}}
+                            {'tags': {'$in': album.tags_include}},
+                            {'tags': {'$nin': album.tags_exclude}}
                         ]},
                         {'$and': [
                             {'date_taken': {'$gte': album.startdate}},
@@ -147,10 +153,11 @@ class Database(object):
             return cur
 
         def save_album(self, album):
-
+            exclude = [ObjectId(_id) for _id in album.tags_exclude]
+            include = [ObjectId(_id) for _id in album.tags_include]
             alb = {
-                'tags_exclude': album.tags_exclude,
-                'tags_include': album.tags_include,
+                'tags_exclude': exclude,
+                'tags_include': include,
                 'image_count': album.image_count,
                 'name': album.name,
                 'selected': album.selected,

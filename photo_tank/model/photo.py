@@ -134,7 +134,8 @@ class Photo():
                 "subcategory": subcategory,
                 "sortorder": sortorder
             }
-            self.db.create_keyword(keyword)
+            keyword_id = self.db.create_keyword(keyword)
+            self.tags.append(keyword_id)
             #self.tags.append({"category": category,"subcategory": subcategory,"sortorder": sortorder, "value": value})
 
         self.tags = []
