@@ -1,21 +1,54 @@
 import os
 
-
-from flask import request,  url_for, send_file, jsonify, render_template, session, redirect
+from flask import request, url_for, send_file, jsonify, render_template, session, redirect
 from photo_tank.app import app
 from photo_tank.model.album import Album
 from photo_tank.model.photo import Photo
 from photo_tank.model.database import Database
 from photo_tank.model.common import Pagination
+import json
 import time
+
 db = Database()
 
 
 @app.route('/')
 @app.route('/home')
 def home():
+    ofo = [
+        {
+            'title': 'Azuki bean',
+            'description': 'Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage soko coriander sweet pepper water spinach winter purslane shallot tigernut lentil beetroot.Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage.',
+            'thumbnail': ['static/external/jquery-elastic-grid/images/small/1.jpg',
+                          'static/external/jquery-elastic-grid/images/small/2.jpg'],
+            'large': ['static/external/jquery-elastic-grid/images/small/1.jpg',
+                      'static/external/jquery-elastic-grid/images/small/2.jpg'],
+            'button_list':
+                [
+                    {'title': 'Demo', 'url': 'http://porfolio.bonchen.net/', 'new_window': True},
+                    {'title': 'Download', 'url': 'http://porfolio.bonchen.net/', 'new_window': False}
+                ],
+            'tags': ['Self Portrait']
+        },
+        {
+            'title': 'Swiss chard pumpkin',
+            'description': 'Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage soko coriander sweet pepper water spinach winter purslane shallot tigernut lentil beetroot.Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage.',
+            'thumbnail': ['static/external/jquery-elastic-grid/images/small/3.jpg',
+                          'static/external/jquery-elastic-grid/images/small/4.jpg'],
+            'large': ['static/external/jquery-elastic-grid/images/small/3.jpg',
+                      'static/external/jquery-elastic-grid/images/small/4.jpg'],
+            'button_list':
+                [
+                    {'title': 'Demo', 'url': 'http://porfolio.bonchen.net/', 'new_window': True},
+                    {'title': 'Download', 'url': 'http://porfolio.bonchen.net/', 'new_window': True}
+                ],
+            'tags': ['Landscape']
+        }
 
-    return render_template('home.html')
+    ]
+
+    return render_template('demo_responsive.html', ofo=json.dumps(ofo))
+
 
 @app.route('/image/store/image/<image_id>/size/<size>')
 def imagestore(image_id, size):
@@ -49,30 +82,30 @@ def images(album_id, page):
         alb.save()
         if "temp_album" in session:
             if session["temp_album"] != alb.id:
-                db.delete_album(session["temp_album"], {'name':'__temp__'})
+                db.delete_album(session["temp_album"], {'name': '__temp__'})
         session["temp_album"] = alb.id
         return redirect("/image/album/" + alb.id)
     else:
         alb = Album(album_id)
-    app.logger.debug("set album {}".format((time.clock() - ts)*1000))
+    app.logger.debug("set album {}".format((time.clock() - ts) * 1000))
     perPage = 24
     pagination = Pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
     alb.get_images()
-    app.logger.debug("get images {}".format((time.clock() - ts)*1000))
+    app.logger.debug("get images {}".format((time.clock() - ts) * 1000))
 
     kw = db.get_keywords()
-    app.logger.debug("get kw {}".format((time.clock() - ts)*1000))
+    app.logger.debug("get kw {}".format((time.clock() - ts) * 1000))
 
     return render_template('image_viewer/images.html',
                            paginator=pagination,
-                           album = alb,
+                           album=alb,
                            keywords=kw
                            )
 
+
 @app.route('/album/save/<album_id>', methods=['GET', 'POST'])
 def album_save(album_id):
-
     album = Album(album_id)
 
     form_data = request.get_json()
@@ -83,7 +116,8 @@ def album_save(album_id):
         album.selected = form_data['selected']
         album.selected_only = form_data['selected_only']
         album.save()
-    return jsonify({'status':'ok'})
+    return jsonify({'status': 'ok'})
+
 
 @app.route('/album/list', defaults={'page': 1})
 @app.route('/album/list/page/<int:page>')
@@ -95,14 +129,14 @@ def collection(page):
 
     return render_template('album_list.html', data=data, paginator=pagination)
 
+
 UPLOAD_FOLDER = '/tmp/'
 ALLOWED_EXTENSIONS = set(['txt'])
-
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # def allowed_file(filename):
-#     return '.' in filename and \
+# return '.' in filename and \
 #            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 #
 # @app.route("/ups", methods=['GET', 'POST'])

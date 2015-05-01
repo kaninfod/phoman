@@ -41,7 +41,7 @@ class MyDaemon(Daemon):
         self.logger.warning("Warming indexer...")
 
         while True:
-            self.scheduler.enter(30, 1, self.run_watcher)
+            self.scheduler.enter(5, 1, self.run_watcher)
             self.scheduler.run()
 
 
