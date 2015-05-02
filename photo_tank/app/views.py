@@ -59,7 +59,7 @@ def imagestore(image_id, size):
         elif size == "medium":
             path = im.files.medium_path
         elif size == "large":
-            path = im.large_path
+            path = im.files.large_path
         elif size == "original":
             path = im.files.original_subpath
     return send_file(path)
@@ -86,16 +86,14 @@ def images(album_id, page):
         session["temp_album"] = alb.id
         return redirect("/image/album/" + alb.id)
     else:
+
         alb = Album(album_id)
-    app.logger.debug("set album {}".format((time.clock() - ts) * 1000))
-    perPage = 24
+
+    perPage = 28
     pagination = Pagination(page, perPage, alb.image_count)
     alb.paginator = pagination
     alb.get_images()
-    app.logger.debug("get images {}".format((time.clock() - ts) * 1000))
-
     kw = db.get_keywords()
-    app.logger.debug("get kw {}".format((time.clock() - ts) * 1000))
 
     return render_template('image_viewer/images.html',
                            paginator=pagination,

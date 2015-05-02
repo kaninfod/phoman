@@ -29,27 +29,70 @@
 
     <div class="panel-body">
 
-            <div class="row no-gutter">
-                {% for img in album %}
 
-                    <div class="col-lg-2 col-md-2 col-sm-3 col-xs-4">
-                        <div class="thumbnail photo-group">
-                            <a href="#" class="photo-wrapper">
-                                <div class="photo">
-                                    <img id="{{ img.id }}" src="/image/store/image/{{ img.id }}/size/thumb" alt="..." class="img-responsive">
-                                    <span class="label label-inverse photo-label">{{ img.date_taken }}</span>
 
-                                    <i class="ticked photo-tick fa fa-check-circle-o fa-2x" style="display: none"></i>
-                                    <i class="unticked photo-tick fa fa-circle-o fa-2x"></i>
+        <div id="elastic_grid_demo"></div>
 
-                                </div>
-                            </a>
-                        </div>
+        <script src="/static/js/jquery-latest.js"></script>
+        <script src="{{ url_for('static', filename='external/jquery-elastic-grid/js/modernizr.custom.js') }}"></script>
+        <script src="{{ url_for('static', filename='external/jquery-elastic-grid/js/classie.js') }}"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='external/fancyBox/source/jquery.fancybox.css') }}" type="text/css" media="screen" />
+        <script type="text/javascript" src="{{ url_for('static', filename='external/fancyBox/source/jquery.fancybox.pack.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='external/jquery-elastic-grid/js/elastic_grid.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='external/jquery-elastic-grid/js/jquery.hoverdir.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='external/jquery-elastic-grid/js/jquery.elastislide.js') }}"></script>
 
-                    </div>
+        <script type="text/javascript">
 
-                {% endfor %}
-            </div>
+
+            $(".og-fullimg").click(function() {
+                alert("kaj")
+            })
+
+
+            $(function(){
+                $("#elastic_grid_demo").elastic_grid({
+                    'showAllText' : 'All',
+                    'filterEffect': 'fallperspective', // moveup, scaleup, fallperspective, fly, flip, helix , popup
+                    'hoverDirection': true,
+                    'hoverDelay': 10,
+                    'hoverInverse': false,
+                    'expandingSpeed': 500,
+                    'expandingHeight': 300,
+                    'items' : [
+                        {% for photo in album %}
+                            {
+                                'title': '{{ photo.date_taken }}',
+                                'description': '',
+                                'location': '{{ photo.location.address }}',
+                                'thumbnail': ['/image/store/image/{{ photo.id }}/size/thumb'],
+                                'large': ['/image/store/image/{{ photo.id }}/size/large'],
+                                'button_list':
+                                    [
+                                        {'title': 'Demo', 'url': 'http://porfolio.bonchen.net/', 'new_window': true},
+                                        {'title': 'Download', 'url': 'http://porfolio.bonchen.net/', 'new_window': false}
+                                    ],
+                                'tags': ['Self Portrait']
+                            },
+                        {% endfor %}
+
+                    ]
+
+
+
+
+
+
+
+                });
+            });
+
+
+
+
+
+        </script>
+
 
     </div>
 </div>

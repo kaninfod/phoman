@@ -48,7 +48,7 @@ class Album():
         if self.image_collection:
             self._position += 1
             if self._paginator:
-                if self._position < self.paginator.max_rec:
+                if self._position <= self.paginator.max_rec:
                     r = next(self.image_collection)
                     p = Photo(r)
                     return p
