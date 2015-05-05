@@ -13,7 +13,7 @@ import errno
 
 
 
-def index_watcher():
+def file_watcher():
     for path in app.config["IMAGE_WATCH_FOLDER"]:
         index_path(path)
 
@@ -90,7 +90,7 @@ def new_image_file_handler(img, soruce_file):
     img.files.original_subpath = get_path_from_date(app.config["IMAGE_STORE"], img.date_taken)
     img.files.original_path = os.path.join(img.files.original_subpath, img.id) + img.files.extension
 
-    # check  that the image file does not exist
+    # check that the image file does not exist
     if not os.path.exists(img.files.original_path):
         # move the image to the image store
         ensure_dirs_exist(img.files.original_subpath)
@@ -217,5 +217,5 @@ def set_keywords():
 
 if __name__ == "__main__":
 
-        index_watcher()
+        file_watcher()
 

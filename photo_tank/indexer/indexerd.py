@@ -1,42 +1,14 @@
 __author__ = 'hingem'
-
-
 import sys
 
 from photo_tank.bin.daemon import Daemon
-from photo_tank.indexer.index_files import index_watcher, set_keywords
-from photo_tank.indexer.index_locations import location_watcher
-from photo_tank.indexer.index_to_dropbox import update_to_dropbox
+from photo_tank.indexer.files_watcher import file_watcher
+from photo_tank.indexer.location_watcher import location_watcher
+from photo_tank.indexer.dropbox_watcher import dropbox_watcher
 from photo_tank.app import app
 from time import sleep
-import sched
-import time
-import logging
-import logging.handlers
 
 class MyDaemon(Daemon):
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = False
-    fh = logging.FileHandler("/tmp/test.log", "w")
-    fh.setLevel(logging.DEBUG)
-    logger.addHandler(fh)
-
-
-    def run_watcher(self):
-        app.logger.debug("starting new watcher cycle")
-        # self.logger.warning("starting keyword indexer..." + str(time.time()))
-        # set_keywords()
-        # self.logger.warning("starting file indexer..." + str(time.time()))
-        # index_watcher()
-        # self.logger.warning("starting location indexer..." + str(time.time()))
-        location_watcher()
-
-
-
-
-
 
     def run(self):
 
@@ -45,7 +17,7 @@ class MyDaemon(Daemon):
 
             if app.config["WATCHER_FILES"]:
                 app.logger.debug("Running file whatcher")
-                index_watcher()
+                file_watcher()
 
             if app.config["WATCHER_LOCATION"]:
                 app.logger.debug("Running location whatcher")
@@ -53,7 +25,7 @@ class MyDaemon(Daemon):
 
             if app.config["WATCHER_DROPBOX"]:
                 app.logger.debug("Running Dropbox whatcher")
-                update_to_dropbox()
+                dropbox_watcher()
 
             sleep(app.config["WATCHER_INTEVAL"])
 
@@ -74,16 +46,6 @@ if __name__ == "__main__":
     else:
         print("usage: %s start|stop|restart" % sys.argv[0])
         sys.exit(2)
-
-
-
-
-
-
-
-
-
-
 
 
 

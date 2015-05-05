@@ -78,7 +78,7 @@ def put_photo(photo, client):
 
     return True
 
-def update_to_dropbox():
+def dropbox_watcher():
     dropbox_client = login(app.config["DROPBOX_ACCESS_TOKEN"])
 
     cursor = app.db.get_dropbox_updates()

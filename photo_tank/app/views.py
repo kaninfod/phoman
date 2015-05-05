@@ -7,7 +7,7 @@ from photo_tank.model.photo import Photo
 from photo_tank.model.database import Database
 from photo_tank.model.common import Pagination
 
-from photo_tank.indexer.index_to_dropbox import *
+from photo_tank.indexer.dropbox_watcher import *
 
 import json
 import time
@@ -102,7 +102,7 @@ def collection(page):
 
 @app.route('/dropbox')
 def dropbox():
-    update_to_dropbox()
+    dropbox_watcher()
     return render_template('home.html')
 
 
