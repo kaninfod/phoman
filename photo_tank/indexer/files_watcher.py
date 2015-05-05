@@ -79,9 +79,9 @@ def index_jpeg_file(input_file_path):
 def new_image_file_handler(img, soruce_file):
 
     #check if the image already exists - first check based on digital hash of image, then on same filename
-    existing_record = app.db.locate_image("image_hash", img.image_hash)
+    existing_record = app.db.locate_photo("image_hash", img.image_hash)
     if not existing_record:
-            existing_record = app.db.locate_image("files.filename", img.files.filename)
+            existing_record = app.db.locate_photo("files.filename", img.files.filename)
 
     #save photo to get id. Upsert is false meaning that if similar record exists we till create duplicate
     app.db.save_photo(img, upsert=False)

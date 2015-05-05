@@ -87,10 +87,10 @@ class Album():
                 #self._get_images()
 
     def _get_images(self):
-        self.image_collection = self.db.get_images_in_album(self)
+        self.image_collection = self.db.get_photos_in_album(self)
 
     def get_images(self):
-        self.image_collection = self.db.get_images_in_album(self, skip=self.paginator.min_rec, limit=self.paginator.per_page)
+        self.image_collection = self.db.get_photos_in_album(self, skip=self.paginator.min_rec, limit=self.paginator.per_page)
 
     def save(self):
         self.db.save_album(self)

@@ -26,8 +26,10 @@ class MyDaemon(Daemon):
             if app.config["WATCHER_DROPBOX"]:
                 app.logger.debug("Running Dropbox whatcher")
                 dropbox_watcher()
+            if app.config["RUN_ONCE"]:
+                break
 
-            sleep(app.config["WATCHER_INTEVAL"])
+            sleep(app.config["WATCHER_INTERVAL"])
 
 
 if __name__ == "__main__":
