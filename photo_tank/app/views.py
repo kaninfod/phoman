@@ -6,6 +6,9 @@ from photo_tank.model.album import Album
 from photo_tank.model.photo import Photo
 from photo_tank.model.database import Database
 from photo_tank.model.common import Pagination
+
+from photo_tank.indexer.index_to_dropbox import *
+
 import json
 import time
 
@@ -15,39 +18,8 @@ db = Database()
 @app.route('/')
 @app.route('/home')
 def home():
-    ofo = [
-        {
-            'title': 'Azuki bean',
-            'description': 'Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage soko coriander sweet pepper water spinach winter purslane shallot tigernut lentil beetroot.Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage.',
-            'thumbnail': ['static/external/jquery-elastic-grid/images/small/1.jpg',
-                          'static/external/jquery-elastic-grid/images/small/2.jpg'],
-            'large': ['static/external/jquery-elastic-grid/images/small/1.jpg',
-                      'static/external/jquery-elastic-grid/images/small/2.jpg'],
-            'button_list':
-                [
-                    {'title': 'Demo', 'url': 'http://porfolio.bonchen.net/', 'new_window': True},
-                    {'title': 'Download', 'url': 'http://porfolio.bonchen.net/', 'new_window': False}
-                ],
-            'tags': ['Self Portrait']
-        },
-        {
-            'title': 'Swiss chard pumpkin',
-            'description': 'Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage soko coriander sweet pepper water spinach winter purslane shallot tigernut lentil beetroot.Swiss chard pumpkin bunya nuts maize plantain aubergine napa cabbage.',
-            'thumbnail': ['static/external/jquery-elastic-grid/images/small/3.jpg',
-                          'static/external/jquery-elastic-grid/images/small/4.jpg'],
-            'large': ['static/external/jquery-elastic-grid/images/small/3.jpg',
-                      'static/external/jquery-elastic-grid/images/small/4.jpg'],
-            'button_list':
-                [
-                    {'title': 'Demo', 'url': 'http://porfolio.bonchen.net/', 'new_window': True},
-                    {'title': 'Download', 'url': 'http://porfolio.bonchen.net/', 'new_window': True}
-                ],
-            'tags': ['Landscape']
-        }
 
-    ]
-
-    return render_template('demo_responsive.html', ofo=json.dumps(ofo))
+    return render_template('home.html')
 
 
 @app.route('/image/store/image/<image_id>/size/<size>')
@@ -75,7 +47,7 @@ def showlarge(size, id):
 @app.route('/image/album/<album_id>', defaults={'page': 1}, methods=['GET', 'POST'])
 @app.route('/image/album/<album_id>/page/<int:page>')
 def images(album_id, page):
-    ts = time.clock()
+
     if not album_id:
         alb = Album()
         alb.name = "__temp__"
@@ -128,33 +100,12 @@ def collection(page):
     return render_template('album_list.html', data=data, paginator=pagination)
 
 
-UPLOAD_FOLDER = '/tmp/'
-ALLOWED_EXTENSIONS = set(['txt'])
+@app.route('/dropbox')
+def dropbox():
+    update_to_dropbox()
+    return render_template('home.html')
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# def allowed_file(filename):
-# return '.' in filename and \
-#            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-#
-# @app.route("/ups", methods=['GET', 'POST'])
-# def index():
-#     if request.method == 'POST':
-#         file = request.files['file']
-#         if file and allowed_file(file.filename):
-#             filename = secure_filename(file.filename)
-#             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-#             return redirect(url_for('index'))
-#     return """
-#     <!doctype html>
-#     <title>Upload new File</title>
-#     <h1>Upload new File</h1>
-#     <form action="" method=post enctype=multipart/form-data>
-#       <p><input type=file name=file>
-#          <input type=submit value=Upload>
-#     </form>
-#     <p>%s</p>
-#     """ % "<br>".join(os.listdir(app.config['UPLOAD_FOLDER'],))
 
 
 def url_for_other_page(page):

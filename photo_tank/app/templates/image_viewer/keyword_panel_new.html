@@ -1,0 +1,183 @@
+<style class='csscreations'>
+
+    * {margin: 0; padding: 0;}
+
+    body {
+        font-family: Nunito, arial, verdana;
+    }
+    #accordian {
+        background: #004050;
+        width: 250px;
+        margin: 50px auto 0 auto;
+        color: white;
+        box-shadow:
+            0 5px 15px 1px rgba(0, 0, 0, 0.6),
+            0 0 200px 1px rgba(255, 255, 255, 0.5);
+    }
+
+    #accordian h3 {
+        background: #003040;
+        background: linear-gradient(#003040, #002535);
+    }
+    #accordian h3 a {
+        padding: 0 10px;
+        font-size: 12px;
+        line-height: 34px;
+        display: block;
+        color: white;
+        text-decoration: none;
+    }
+
+    #accordian h3:hover {
+        text-shadow: 0 0 1px rgba(255, 255, 255, 0.7);
+    }
+
+    #accordian h3 span {
+        font-size: 16px;
+        margin-right: 10px;
+    }
+
+    #accordian li {
+        list-style-type: none;
+    }
+
+    #accordian ul ul li a, #accordian h4 {
+        color: white;
+        text-decoration: none;
+        font-size: 11px;
+        line-height: 27px;
+        display: block;
+        padding: 0 15px;
+
+        transition: all 0.15s;
+        position: relative;
+    }
+
+    #accordian ul ul li a:hover {
+        background: #003545;
+        border-left: 5px solid lightgreen;
+    }
+
+    #accordian ul ul {
+        display: none;
+    }
+    #accordian li.active>ul {
+        display: block;
+    }
+
+    #accordian ul ul ul{
+        margin-left: 15px; border-left: 1px dotted rgba(0, 0, 0, 0.5);
+    }
+
+    #accordian a:not(:only-child):after {
+        content: "\f104";
+        font-family: fontawesome;
+        position: absolute; right: 10px; top: 0;
+        font-size: 14px;
+    }
+    #accordian .active>a:not(:only-child):after {
+        content: "\f107";
+    }
+</style>
+
+
+
+<div id="accordion" class="sidebar-nav-fixed pull-right affix">
+    <ul>
+
+        {% for keyword in keywords %}
+            <li sortorder="{{ keyword.sortorder }}" class="keyword" category="{{ keyword.category }}" subcategory="{{ keyword.subcategory|replace(" ", "_") }}" style="color: #f1f1f1">
+                {{ keyword.value }}
+            </li>
+        {% endfor %}
+    </ul>
+
+</div>
+
+
+<script>
+
+$(document).ready(function() {
+    outer_div = $("#accordion > ul");
+    category_div = $("<ul></ul>").addClass("category")
+    subcategory_div = $("<li></li>").addClass("subcategory")
+    title_element = $("<h3></h3>").append('<a href="#"></a>')
+    ul_element = $("<li></li>")
+
+    items = outer_div.children()
+    items.each(function() {
+        category = $(this).attr("category")
+        subcategory = $(this).attr("subcategory")
+        sortorder = $(this).attr("sortorder")
+
+        existingCategory = outer_div.find('ul.category[category=' + category + ']')
+        if (!existingCategory.length) {
+            newCategory = category_div.clone()
+            newCategory.attr("category", category)
+
+            new_ul = ul_element.clone()
+            new_title = title_element.clone()
+            new_title.children("a").append(category)
+
+            new_title.appendTo(new_ul)
+            newCategory.appendTo(new_ul)
+
+            new_ul.appendTo(outer_div)
+            //outer_div.append(newCategory)
+        } else {
+            newCategory = existingCategory[0]
+        }
+
+
+        existingSubCategory = outer_div.find('li.subcategory[subcategory=' + subcategory + ']')
+        if (!existingSubCategory.length) {
+            newSubCategory = subcategory_div.clone()
+            newSubCategory.attr("subcategory", subcategory)
+            newSubCategory.attr("sortorder", sortorder)
+
+            new_ul = ul_element.clone()
+            new_title = title_element.clone()
+            new_title.children("a").append(subcategory)
+
+            new_title.appendTo(new_ul)
+            newSubCategory.appendTo(new_ul)
+
+            newSubCategory.appendTo(newCategory)
+
+        } else {
+            newSubCategory = existingSubCategory[0]
+        }
+
+
+
+        $(this).detach().appendTo(newSubCategory)
+
+
+
+
+    })
+
+
+    $("#accordion a").click(function(){
+        var link = $(this);
+        var closest_ul = link.closest("ul");
+        var parallel_active_links = closest_ul.find(".active")
+        var closest_li = link.closest("li");
+        var link_status = closest_li.hasClass("active");
+        var count = 0;
+
+        closest_ul.find("ul").slideUp(function(){
+            if(++count == closest_ul.find("ul").length)
+                parallel_active_links.removeClass("active");
+        });
+
+        if(!link_status)
+        {
+            closest_li.children("ul").slideDown();
+            closest_li.addClass("active");
+        }
+    })
+
+});
+</script>
+

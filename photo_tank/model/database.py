@@ -35,18 +35,6 @@ class Database(object):
             self.keywords.create_index( { "keywords": 1 }, { "unique": True } )
 
 
-        def create_keyword(self, keyword):
-
-            try:
-                result = self.keywords.update({"value":keyword["value"]},{"$set": keyword}, upsert=True)
-                keyword_id = self.keywords.find({"value":keyword["value"]})
-                if keyword_id:
-                    return keyword_id[0]["_id"]
-                else:
-                    return 0
-
-            except Exception as e:
-                print(e)
 
 
 
@@ -73,6 +61,9 @@ class Database(object):
 
             return keywords
 
+        def get_keyword_count(self, keyword_id):
+            k = self.images.find({'tags': {'$in': [ObjectId(keyword_id)]}}).count()
+            return k
 
         def get_keyword_categories(self):
 
@@ -84,6 +75,17 @@ class Database(object):
             record = self.images.find_one({field: value})
             return record
 
+        def upsert_keyword(self, keyword):
+            try:
+                result = self.keywords.update({"value":keyword["value"]},{"$set": keyword}, upsert=True)
+                keyword_id = self.keywords.find({"value":keyword["value"]})
+                if keyword_id:
+                    return keyword_id[0]["_id"]
+                else:
+                    return 0
+
+            except Exception as e:
+                print(e)
 
         def get_photos(self, query=None, sort_by=None, sort_direction=None):
 
@@ -95,12 +97,25 @@ class Database(object):
             return records
 
         def get_dropbox_updates(self):
+
+
             query = {
                 "$or": [
                     {'modified': {'$gt': "dropbox.modified"}},
                     {"dropbox.modified": None}
                 ]
             }
+
+
+
+
+            from datetime import datetime
+            date_object = datetime.strptime("2014-12-11 14:40:30", '%Y-%m-%d %H:%M:%S')
+            query = {
+                "location.status":1,
+                "location.road":"Tryon Road",
+                "date_taken": {"$gt": date_object}}
+
             return self.images.find(query)
 
         def image_count(self, album):

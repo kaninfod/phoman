@@ -50,20 +50,28 @@ def create_path(path, client):
     except Exception as e:
         return False
 
+def check_file_exist(client, path, photo):
+    response = client.metadata(path)
+    if photo.dropbox.revision == response["rev"] and photo.dropbox.size:
+        return True
+    else:
+        return False
+
+
+
 def put_photo(photo, client):
     try:
         path = get_paths(photo.files.original_subpath)
         dropbox_path = "{}/{}{}".format(path, photo.id, photo.files.extension)
-
-        if create_path(path, client):
-
-            f = open(photo.files.original_path, 'rb')
-            response = client.put_file(dropbox_path,f, overwrite=True)
-            photo.dropbox.modified = response["modified"]
-            photo.dropbox.revision = response["rev"]
-            photo.dropbox.size = response["bytes"]
-            photo.dropbox.path = response["path"]
-            photo.save()
+        if not check_file_exist(client, dropbox_path, photo):
+            if create_path(path, client):
+                f = open(photo.files.original_path, 'rb')
+                response = client.put_file(dropbox_path,f, overwrite=True)
+                photo.dropbox.modified = response["modified"]
+                photo.dropbox.revision = response["rev"]
+                photo.dropbox.size = response["bytes"]
+                photo.dropbox.path = response["path"]
+                photo.save()
 
     except Exception as e:
         return False
@@ -78,7 +86,7 @@ def update_to_dropbox():
         photo = Photo(image_id=rec["_id"])
         put_photo(photo, client=dropbox_client)
 
-update_to_dropbox()
+
 
 
 

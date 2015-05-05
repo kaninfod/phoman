@@ -6,6 +6,9 @@ import sys
 from photo_tank.bin.daemon import Daemon
 from photo_tank.indexer.index_files import index_watcher, set_keywords
 from photo_tank.indexer.index_locations import location_watcher
+from photo_tank.indexer.index_to_dropbox import update_to_dropbox
+from photo_tank.app import app
+from time import sleep
 import sched
 import time
 import logging
@@ -22,12 +25,12 @@ class MyDaemon(Daemon):
 
 
     def run_watcher(self):
-
-        self.logger.warning("starting keyword indexer..." + str(time.time()))
-        set_keywords()
-        self.logger.warning("starting file indexer..." + str(time.time()))
-        index_watcher()
-        self.logger.warning("starting location indexer..." + str(time.time()))
+        app.logger.debug("starting new watcher cycle")
+        # self.logger.warning("starting keyword indexer..." + str(time.time()))
+        # set_keywords()
+        # self.logger.warning("starting file indexer..." + str(time.time()))
+        # index_watcher()
+        # self.logger.warning("starting location indexer..." + str(time.time()))
         location_watcher()
 
 
@@ -36,14 +39,23 @@ class MyDaemon(Daemon):
 
 
     def run(self):
-        # Build a scheduler object that will look at absolute times
-        self.scheduler = sched.scheduler(time.time, time.sleep)
-        self.logger.warning("Warming indexer...")
 
         while True:
-            self.scheduler.enter(5, 1, self.run_watcher)
-            self.scheduler.run()
+            app.logger.debug("starting new watcher cycle")
 
+            if app.config["WATCHER_FILES"]:
+                app.logger.debug("Running file whatcher")
+                index_watcher()
+
+            if app.config["WATCHER_LOCATION"]:
+                app.logger.debug("Running location whatcher")
+                location_watcher()
+
+            if app.config["WATCHER_DROPBOX"]:
+                app.logger.debug("Running Dropbox whatcher")
+                update_to_dropbox()
+
+            sleep(app.config["WATCHER_INTEVAL"])
 
 
 if __name__ == "__main__":

@@ -5,9 +5,10 @@ from photo_tank.model.Image_helper import *
 from photo_tank.app import app
 
 
-images = app.db.get_photos({'location.status':0})
+
 
 def location_watcher():
+    images = app.db.get_photos({'location.status':0})
 
     for img in images:
         photo = Photo(img)

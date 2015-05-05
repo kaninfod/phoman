@@ -1,0 +1,83 @@
+
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='external/ThumbnailGridExpandingPreview/css/default.css') }}" />
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='external/ThumbnailGridExpandingPreview/css/component.css') }}" />
+<script src="{{ url_for('static', filename='external/ThumbnailGridExpandingPreview/js/modernizr.custom.js') }}"></script>
+<!-- Add fancyBox -->
+<link rel="stylesheet" href="{{ url_for('static', filename='external/fancybox/source/jquery.fancybox.css') }}" type="text/css" media="screen" />
+<script type="text/javascript" src="{{ url_for('static', filename='external/fancyBox/source/jquery.fancybox.pack.js') }}"></script>
+
+<div class="panel panel-default">
+
+
+    <div class="panel-heading clearfix">
+        <h4 class="panel-title pull-left" style="padding-top: 7.5px;">
+            <span style="margin-left: 10px margin-right: 10px" class="badge">{{ album.image_count }}</span>
+            {{ album.name }}
+            <a href="#" data-target="#mymodal" data-toggle="modal" class="btn btn-info btn-xs">
+                <i class="fa fa-pencil-square-o"></i>
+            </a>
+        </h4>
+
+        <div class="btn-group pull-right">
+            <a href="">
+                <span id="selected" style="display: none">here</span>
+            </a>
+        </div>
+    </div>
+
+
+
+
+    <div class="panel-body">
+
+        <ul id="og-grid" class="og-grid">
+            {% for photo in album %}
+                <li>
+                    <a class="fancybox" rel="fancybox" href="/image/store/image/{{ photo.id }}/size/medium" data-model="{{ photo.model }}" data-largesrc="/image/store/image/{{ photo.id }}/size/medium" data-title="{{ photo.date_taken }}" data-description="" data-location="{{ photo.location.address }}">
+                        <img src="/image/store/image/{{ photo.id }}/size/thumb" alt="img/img_not_found.jpg"/>
+                    </a>
+                </li>
+             {% endfor %}
+        </ul>
+
+
+
+
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='external/ThumbnailGridExpandingPreview/js/grid.js') }}"></script>
+<a href="#" id="btnOpen">Open</a>
+
+<script>
+    $(function() {
+        Grid.init();
+    });
+
+
+
+    $(document).ready(function() {
+		$(".fancybox").fancybox({
+            type        : 'image',
+            openEffect  : 'none',
+            closeEffect : 'none',
+            prevEffect		: 'none',
+            nextEffect		: 'none',
+            closeBtn		: false,
+            helpers		: {
+                title	: { type : 'inside' },
+                buttons	: {}
+                }
+        });
+
+        $("a.button1").click(function(){
+            $("#btnOpen").trigger("click");
+        });
+	});
+
+
+
+
+
+
+</script>

@@ -197,6 +197,12 @@ def ensure_dirs_exist(dirname):
         if e.errno != errno.EEXIST:
             raise
 
+def set_keyword_counts():
+    records = app.db.get_keywords()
+    for keyword in records:
+        cnt = app.db.get_keyword_count(keyword_id=keyword["_id"])
+        keyword.update({"count":cnt})
+        app.db.upsert_keyword(keyword)
 
 def set_keywords():
     records = app.db.get_photos({})
