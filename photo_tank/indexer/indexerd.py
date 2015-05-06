@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 __author__ = 'hingem'
 import sys
 
@@ -37,8 +39,10 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             daemon.start()
+            app.logger.debug("Indexer started.")
         elif 'stop' == sys.argv[1]:
             daemon.stop()
+            app.logger.debug("Indexer stopped.")
         elif 'restart' == sys.argv[1]:
             daemon.restart()
         else:

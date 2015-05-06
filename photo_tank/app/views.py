@@ -62,7 +62,7 @@ def images(album_id, page):
         alb = Album(album_id)
 
     perPage = 28
-    pagination = Pagination(page, perPage, alb.image_count)
+    pagination = Pagination(page, perPage, alb.photo_count)
     alb.paginator = pagination
     alb.get_images()
     kw = db.get_keywords()

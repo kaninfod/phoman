@@ -15,7 +15,7 @@ class Album():
         self.name = ""
         self.type = {}
         self.id = album_id
-        self._image_count = ""
+        self._photo_count = ""
         self.image_collection = None
         self._paginator = None
         self._position = 0
@@ -25,9 +25,9 @@ class Album():
             self._get_collection()
 
     @property
-    def image_count(self):
-        self._image_count = self.db.image_count(self)
-        return self._image_count
+    def photo_count(self):
+        self._photo_count = self.db.photo_count(self)
+        return self._photo_count
 
 
     @property
