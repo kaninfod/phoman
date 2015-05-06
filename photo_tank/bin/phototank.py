@@ -1,4 +1,4 @@
-#!flask/bin/python
+#! /usr/bin/env python
 __author__ = 'hingem'
 
 from photo_tank.app import app
