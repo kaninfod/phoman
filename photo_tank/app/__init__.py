@@ -11,7 +11,23 @@ DB_PORT = app.config["DB_PORT"]
 DB_HOST = app.config["DB_HOST"]
 DB_NAME = app.config["DB_NAME"]
 app.db = Database(port=DB_PORT, host=DB_HOST, db_name=DB_NAME)
-#app.db.initialize_db()
+
+
+# flask-peewee bindings
+from flask_peewee.db import Database as sqlDB
+
+# configure our database
+DATABASE = {
+    'name': 'example.db',
+    'engine': 'peewee.SqliteDatabase',
+}
+
+# instantiate the db wrapper
+sqldb = sqlDB(app)
+
+
+
+
 
 filehandler = logging.FileHandler(app.config["LOG_PATH"])
 filehandler.setLevel(app.config["LOG_LEVEL"])
