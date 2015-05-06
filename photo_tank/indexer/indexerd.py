@@ -18,15 +18,15 @@ class MyDaemon(Daemon):
             app.logger.debug("starting new watcher cycle")
 
             if app.config["WATCHER_FILES"]:
-                app.logger.debug("Running file whatcher")
+                app.logger.debug("Running file watcher")
                 file_watcher()
 
             if app.config["WATCHER_LOCATION"]:
-                app.logger.debug("Running location whatcher")
+                app.logger.debug("Running location watcher")
                 location_watcher()
 
             if app.config["WATCHER_DROPBOX"]:
-                app.logger.debug("Running Dropbox whatcher")
+                app.logger.debug("Running Dropbox watcher")
                 dropbox_watcher()
             if app.config["RUN_ONCE"]:
                 break

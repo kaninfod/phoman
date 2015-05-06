@@ -10,7 +10,7 @@ def lookup_location(image, location):
     # Image location statuses:
     #   -2 : no gps data available
     #   -1 : gps data available but lookup unsuccessful
-    #   0  : gps d  ata available but no lookup attempted
+    #   0  : gps data available but no lookup attempted
     #   1  : gps data available and lookup successful
 
 
