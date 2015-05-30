@@ -16,7 +16,7 @@ class Album(db.Model):
     _image_collection = None
     _paginator = None
     _position = 0
-    _photo_count = 0
+    _photo_count = -1
 
 
     def __iter__(self):
@@ -35,14 +35,31 @@ class Album(db.Model):
             return self.image_collection[index.start:index.stop]
 
     def get_photos(self):
-        pc = Photo.select().join(PhotoKeyword, on=PhotoKeyword.photo).where(PhotoKeyword.keyword==6)
-        self._photo_count = pc.count()
-        return pc
+
+        include = [kw["id"] for kw in self.keywords() if kw["action"]==1]
+        exclude = [kw["id"] for kw in self.keywords() if kw["action"]==2]
+        if len(include):
+            photos_include = Photo.select().join(PhotoKeyword, on=PhotoKeyword.photo).where((PhotoKeyword.keyword.in_(include)))
+        else:
+            photos_include = Photo.select()
+        photos_exclude = Photo.select().join(PhotoKeyword, on=PhotoKeyword.photo).where((PhotoKeyword.keyword.in_(exclude)))
+        photos = (photos_include - photos_exclude).distinct().order_by(SQL('date_taken'))
+
+        self.photo_count = photos.count()
+        return photos
 
     @property
     def photo_count(self):
-         #self._photo_count = Photo.select().count()
-         return self._photo_count
+        if self._photo_count == -1:
+            self.get_photos()
+
+
+        return self._photo_count
+
+    @photo_count.setter
+    def photo_count(self, value):
+        self._photo_count = value
+
 
     @property
     def paginator(self):
@@ -53,11 +70,36 @@ class Album(db.Model):
         self._image_collection = self.get_photos().paginate(paginator.page, paginator.per_page)
         self._image_collection = iter(self._image_collection)
 
-    def add_keyword(self, keyword, type):
-        try:
-            exists = AlbumKeyword.select(AlbumKeyword.album==self, AlbumKeyword.keyword==keyword, AlbumKeyword.type==type)
-        except AlbumKeyword.DoesNotExist:
-            m = AlbumKeyword.create(album=self, keyword=keyword, type=type)
+    def update_keywords(self, keywords):
+        self.remove_keywords()
+        for keyword in keywords:
+            self.add_keyword(keyword["id"], keyword["action"])
+
+    def remove_keywords(self):
+        rec = AlbumKeyword.delete().where(AlbumKeyword.album == self)
+        k = rec.execute()
+
+
+    def add_keyword(self, keyword_id, type):
+
+        exists = AlbumKeyword.select().where((AlbumKeyword.album==self) & (AlbumKeyword.keyword==keyword_id) & (AlbumKeyword.type==type))
+        if not exists.count():
+            m = AlbumKeyword.create(album=self, keyword=keyword_id, type=type)
+
+
+    def keywords(self):
+        # include is type 1
+        # exclude is type 2
+        keyword_array = []
+        for k in self.keywords_include():
+            keyword_array.append(
+                {'category':k.category, 'subcategory':k.subcategory, 'value':k.value, 'id':str(k.id), 'action':1}
+            )
+        for k in self.keywords_exclude():
+            keyword_array.append(
+                {'category':k.category, 'subcategory':k.subcategory, 'value':k.value, 'id':str(k.id), 'action':2}
+            )
+        return keyword_array
 
     def keywords_include(self):
         kw = Keyword  \
@@ -86,104 +128,3 @@ for table in [Album, AlbumKeyword]:
         table.create_table()
     except Exception as e:
         print(e)
-
-
-
-
-
-
-#from phototank.model.database import Database
-#from phototank.model.photo import Photo
-
-
-# class Album():
-#     def __init__(self, album_id=None):
-#         self.tags_include = []
-#         self.tags_exclude = []
-#         self.selected = []
-#         self.startdate = None
-#         self.enddate = None
-#         self.selected_only = None
-#         self.name = ""
-#         self.type = {}
-#         self.id = album_id
-#         self._photo_count = ""
-#         self.image_collection = None
-#         self._paginator = None
-#         self._position = 0
-#         self.db = Database()
-#
-#         if album_id:
-#             self._get_collection()
-#
-#     @property
-#     def photo_count(self):
-#         self._photo_count = self.db.photo_count(self)
-#         return self._photo_count
-#
-#
-#     @property
-#     def paginator(self):
-#         return self._paginator
-#
-#     @paginator.setter
-#     def paginator(self, paginator):
-#         self._position = paginator.min_rec
-#         self._paginator = paginator
-#
-#
-#     def __iter__(self):
-#         return self
-#
-#     def __next__(self):
-#
-#         if self.image_collection:
-#             self._position += 1
-#             if self._paginator:
-#                 if self._position <= self.paginator.max_rec:
-#                     r = next(self.image_collection)
-#                     p = Photo(r)
-#                     return p
-#                 else:
-#                     raise StopIteration()
-#             else:
-#                 if self._position <= self.image_collection.count():
-#                     return Photo(image_id=next(self.image_collection))
-#                 else:
-#                     raise StopIteration()
-#
-#         else:
-#
-#             raise StopIteration()
-#
-#     def __getitem__(self, index):
-#
-#         if isinstance(index, int):
-#             return Photo(self.image_collection[index])
-#         elif isinstance(index, slice):
-#             return self.image_collection[index.start:index.stop]
-#
-#     def _get_collection(self):
-#         if self.id:
-#             record = self.db.get_album(self.id)
-#             if record:
-#                 self.id = record["_id"]
-#                 self.name = record["name"]
-#                 self.tags_exclude = record["tags_exclude"]
-#                 self.tags_include = record["tags_include"]
-#                 self.startdate = record["startdate"]
-#                 self.enddate = record["enddate"]
-#                 self.selected_only = record["selected_only"]
-#                 self.selected = record["selected"]
-#                 self.type = record["type"]
-#                 #self._get_images()
-#
-#     def _get_images(self):
-#         self.image_collection = self.db.get_photos_in_album(self)
-#
-#     def get_images(self):
-#         self.image_collection = self.db.get_photos_in_album(self, skip=self.paginator.min_rec, limit=self.paginator.per_page)
-#
-#     def save(self):
-#         self.db.save_album(self)
-#         self._get_images()

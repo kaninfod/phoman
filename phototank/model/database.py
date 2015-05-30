@@ -1,6 +1,6 @@
 __author__ = 'hingem'
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+#from pymongo import MongoClient
+#from bson.objectid import ObjectId
 
 
 class Database(object):

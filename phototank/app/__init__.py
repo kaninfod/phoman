@@ -10,16 +10,8 @@ app.config.from_pyfile('../conf/phototank.conf')
 DB_PORT = app.config["DB_PORT"]
 DB_HOST = app.config["DB_HOST"]
 DB_NAME = app.config["DB_NAME"]
-#app.db = Database(port=DB_PORT, host=DB_HOST, db_name=DB_NAME)
 
-
-# flask-peewee bindings
-#from flask_peewee.db import Database as DB
 from playhouse.flask_utils import FlaskDB
-# configure our database
-
-# instantiate the db wrapper
-
 db = FlaskDB(app)
 
 

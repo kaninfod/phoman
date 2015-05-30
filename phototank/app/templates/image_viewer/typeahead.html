@@ -1,0 +1,35 @@
+
+{% block content %}
+
+<style>
+
+
+
+</style>
+
+
+
+
+    <div class="col-md-4">
+        <div class="input-group">
+            <div class="input-group-btn">
+                <button id="keywordAction" keyword-action="1" type="button" class="btn btn-success dropdown-toggle" label-class="label-success" data-toggle="dropdown" aria-expanded="false">Include<span class="caret"></span></button>
+                <ul class="dropdown-menu" role="menu">
+                    <li ><a href="#" btn-text="Include" id="included">Include</a></li>
+                    <li ><a href="#" btn-text="Exclude" id="excluded">Exclude</a></li>
+                </ul>
+            </div>
+            <input type="text" id="keywordInput" class="form-control">
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <h4><div id="keywordsInAlbum" style="background-color: #ffffff"></div></h4>
+    </div>
+
+<script>
+keywords_in_album = {{ keywords|safe }}
+</script>
+
+{% endblock %}
+

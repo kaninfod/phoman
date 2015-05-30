@@ -5,54 +5,101 @@
 
 $(document).ready(function() {
 
-    $(".include-keyword").click(function() {
+    $('#right-panel-link').click({
+        side: 'right',
+        clickClose: false,
+        duration: 600,
+        easingOpen: 'easeInBack',
+        easingClose: 'easeOutBack'
+        });
 
-        parent_div = $(this).closest("div");
-
-        badge = parent_div.find("a > span");
-        if (badge.is("[include]")) {
-            badge.removeAttr("include");
-            badge.removeClass("badge-danger");
-            badge.removeClass("badge-success");
-        } else {
-            badge.attr("include",'');
-            badge.removeAttr("exclude",'');
-            badge.removeClass("badge-danger");
-            badge.addClass("badge-success");
-        }
-
-
-
-        include_menu = parent_div.find("ul > li > a").attr("id");
-
-        if (album_id !== 'None') {
-            submit_album()
-        }
-
+    $('#close-panel-bt').click(function() {
+      $.panelslider.close();
     });
 
-    $(".exclude-keyword").click(function() {
-        parent_div = $(this).closest("div");
 
-        badge = parent_div.find("a > span");
-        if (badge.is("[exclude]")) {
-            badge.removeAttr("exclude");
-            badge.removeClass("badge-danger");
-            badge.removeClass("badge-success");
-        } else {
-            badge.attr("exclude",'');
-            badge.removeAttr("include",'');
-            badge.addClass("badge-danger");
-            badge.removeClass("badge-success");
-        }
+    //Initiate the autocomplete element
+    $( "#keywordInput" ).autocomplete({
+        source: "/keywords",
+        minLength: 2,
+        select: function( event, ui ) {
+            action = $("#keywordAction").attr("keyword-action")
+            addKeyword(ui.item.id, ui.item.value, action)
 
-        include_menu = parent_div.find("ul > li > a").attr("id");
-
-        if (album_id !== 'None') {
+            //reload page when new keyword is added
             submit_album()
+
+            //clear autocomplete input
+            $(this).val('');
+            return false;
+          }
+    });
+
+    //when page reloads, all keywords in album should get added to keyword box
+    $.each( keywords_in_album, function( key, obj ) {
+        addKeyword(obj.id, obj.value, obj.action)
+    });
+
+    //Adds a keyword to UI
+    function addKeyword(id, value, action) {
+        div = $("#keywordsInAlbum")
+        var newSpan = $("<span></span>").appendTo(div);
+        newSpan.attr("id",id)
+        newSpan.addClass("label")
+        newSpan.addClass(getClass(action))
+        newSpan.html(value)
+        newSpan.append("<a></a>")
+        newSpan.children("a").append("<i></i>")
+        newSpan.children("a").children("i").addClass("fa fa-minus-circle")
+        return newSpan
+
+    }
+
+    function getClass(action) {
+        if (action==1) {
+            return "label-success"
+        } else {
+            return "label-danger"
+        }
+    }
+
+    $(document).on ("click", "#keywordsInAlbum > span > a > i", function (event) {
+        event.target.parentElement.parentElement.remove()
+        submit_album()
+    });
+
+    //Gets all keywords added in ui, puts them in list for backend to process
+    function get_keywords() {
+        outer_div = $("#keywordsInAlbum");
+
+        var included = [];
+        outer_div.find('.label-success').each(function(i) {
+            included.push( { 'id': $(this).attr("id"), 'action': 1 } );
+        });
+        var excluded = [];
+        outer_div.find('.label-danger').each(function(i) {
+            excluded.push({ 'id': $(this).attr("id"), 'action': 2 } );
+        });
+        var keywords = included.concat(excluded)
+        return keywords;
+    }
+
+
+    $('.input-group-btn > ul > li').click(function(event){
+        state = event.target.getAttribute("btn-text")
+
+        if (state=="Include") {
+            $("#keywordAction").attr("keyword-action", "1")
+            $("#keywordAction").addClass("btn-success")
+            $("#keywordAction").removeClass("btn-danger")
+        } else {
+            $("#keywordAction").attr("keyword-action", "2")
+            $("#keywordAction").removeClass("btn-success")
+            $("#keywordAction").addClass("btn-danger")
         }
 
-    });
+    })
+
 
     $(".photo-tick").click(function() {
 
@@ -89,28 +136,6 @@ $(document).ready(function() {
         }
     });
 
-    function get_included_keywords() {
-        outer_div = $("#accordion");
-
-        var included = [];
-        outer_div.find('[include]').each(function(i) {
-            included.push( $(this).attr("id") );
-        });
-
-        return included;
-    }
-
-    function get_excluded_keywords() {
-        outer_div = $("#accordion");
-
-        var excluded = [];
-        outer_div.find('[exclude]').each(function(i) {
-            excluded.push( $(this).attr("id") );
-        });
-
-        return excluded;
-    }
-
     function get_selected_images() {
         if (sessionStorage["selected_images"] === "") {
             selected_images = []
@@ -118,11 +143,9 @@ $(document).ready(function() {
             selected_images = JSON.parse(sessionStorage["selected_images"])
         }
         return selected_images
-
     }
 
     function update_ticks() {
-
         selected_images = get_selected_images();
 
         for (var i = 0; i < selected_images.length; i++) {
@@ -161,15 +184,13 @@ $(document).ready(function() {
             post_data = {
                 'name': $("#album_name").val(),
                 'included': [],
-                'excluded': [],
                 'selected': get_selected_images(),
                     'selected_only': true
             };
         } else {
             post_data = {
                 'name': $("#album_name").val(),
-                'included': get_included_keywords(),
-                'excluded': get_excluded_keywords(),
+                'keywords': get_keywords(),
                 'selected': get_selected_images(),
                 'selected_only': false
             };

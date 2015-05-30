@@ -1,62 +1,112 @@
 <div class="sidebar-nav-fixed pull-right affix">
+    {% for category, categories in keywords.items() %}
+    <div class="panel panel-group" id="{{ category }}">
+        <div class="panel-body">
+            {% set num = 0 %}
+            {% set num = num + 1 %}
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#{{ category }}" href="#{{ subcategory  }}"> {{ category }}</a>
+                </h4>
+            </div>
 
-
-<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-
-{% set cur_category = "" %}
-{% for keyword in keywords %}
-    {% if not cur_category == keyword.category %}
-        {% set cur_category = keyword.category %}
-
-        {% if add_tail %}
-            {% set add_tail = False %}
+            {% for subcategory, subcategories in categories.items() %}
+            <div class="panel-collapse collapse panel-scroll" id="{{ subcategory }}">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#{{ subcategory }}"> {{ subcategory }} </a>
+                        </h4>
+                    </div>
+                    <div id="{{ subcategory }}" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <table class="table">
+                                {% for value, details in subcategories.items() %}
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <a href="#"> {{ value }}</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        {% endif %}
-        {% set add_tail = True %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div> <!-- sidebar -->
 
 
 
+
+
+
+
+
+
+<!--
+{#
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+
+        {% for category, categories in keywords.items() %}
+
+        <!-- Category start -->
         <div class="panel panel-default">
-            <div class="panel-heading" role="tab" id="heading{{ keyword.category }}">
+            <div class="panel-heading" role="tab" id="heading{{ category }}">
                 <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ keyword.category }}" aria-expanded="false" aria-controls="collapse{{ keyword.category }}">
-                        {{ keyword.category }}
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ category }}" aria-expanded="false" aria-controls="collapse{{ category }}">
+                        {{ category }}
                     </a>
                 </h4>
             </div>
-            <div id="collapse{{ keyword.category }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ keyword.category }}">
-                <div class="panel-body" style="max-height:450px ;overflow-y: scroll;">
-    {% endif %}
-
-                    <div class="dropdown">
-                        <a href="#" data-toggle="dropdown" class="dropdown-toggle">
-                                {% if keyword in album.keywords_include() %}
-                                   <span grouping="{{ keyword.category }}.{{ keyword.subcategory }}.{{ keyword.sortorder }}" id="{{ keyword.id }}" include  class="badge badge-success">{{ keyword.value }}</span>
-                                {% elif  keyword in album.keywords_exclude() %}
-                                   <span grouping="{{ keyword.category }}.{{ keyword.subcategory }}.{{ keyword.sortorder }}" id="{{ keyword.id }}" exclude  class="badge badge-danger">{{ keyword.value }}</span>
-                                {% else %}
-                                   <span grouping="{{ keyword.category }}.{{ keyword.subcategory }}.{{ keyword.sortorder }}" id="{{ keyword.id }}" class="badge">{{ keyword.value }}</span>
-                                {% endif %}
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="include-keyword">Include</a></li>
-                            <li><a class="exclude-keyword">Exclude</a></li>
-                        </ul>
-                    </div>
-
-
-
-
-
-{% endfor %}
-
+                {% for subcategory, subcategories in categories.items() %}
+                <!-- Subcategory start -->
+                <div class="accordion-inner">
+                    <div class="panel panel-default">
+                        <div class  ="panel-heading" role="tab" id="heading{{ subcategory }}">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ subcategory }}" aria-expanded="false" aria-controls="collapse{{ subcategory }}">
+                                    {{ subcategory }}
+                                </a>
+                            </h4>
+                        </div>
+                            {% for value, details in subcategories.items() %}
+                            <!-- value start -->
+                            <div id="collapse{{ details.category }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ details.category }}">
+                                <div class="panel-body" style="max-height:450px ;overflow-y: scroll;">
+                                    <div class="dropdown">
+                                        <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+                                                {% if details.value in album.keywords_include() %}
+                                                   <span grouping="{{ details.category }}.{{ details.subcategory }}.{{ details.sortorder }}" id="{{ details.id }}" include  class="badge badge-success">{{ details.value }}</span>
+                                                {% elif  keyword in album.keywords_exclude() %}
+                                                   <span grouping="{{ details.category }}.{{ details.subcategory }}.{{ details.sortorder }}" id="{{ details.id }}" exclude  class="badge badge-danger">{{ details.value }}</span>
+                                                {% else %}
+                                                   <span grouping="{{ details.category }}.{{ details.subcategory }}.{{ details.sortorder }}" id="{{ details.id }}" class="badge">{{ details.value }}</span>
+                                                {% endif %}
+                                        </a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="include-keyword">Include</a></li>
+                                            <li><a class="exclude-keyword">Exclude</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- value end -->
+                            {% endfor %}
                     </div>
                 </div>
-            </div>
+                <!-- Subcategory end -->
+                {% endfor %}
+        </div>
+        <!-- Category end -->
+        {% endfor %}
 </div>
 
 </div>
-
-
+#}

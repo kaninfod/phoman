@@ -19,9 +19,19 @@ import time
 def home():
 
     ph = Photo().select()
-    #save_me(ph)
-    return render_template('home.html')
 
+    return render_template('panel.html')
+
+@app.route('/keywords')
+def keywords():
+
+
+    k = Keyword()
+    term = (request.args.get('term'))
+    li = k.json(query=term)
+
+    r = json.dumps(li)
+    return r
 
 @app.route('/image/store/image/<image_id>/size/<size>')
 def imagestore(image_id, size):
@@ -61,17 +71,18 @@ def images(album_id, page):
         return redirect("/image/album/" + str(album.id))
     print(time.clock() - cl)
     album = Album.get(Album.id==album_id)
+    keyword_array = album.keywords()
+
     print(time.clock() - cl)
-    perPage = 28
+    perPage = 27
     pagination = Pagination(page, perPage, album.photo_count)
     album.paginator = pagination
-    p = Keyword()
-    kw = p.keyword_tree()
+
     print(time.clock() - cl)
     return render_template('image_viewer/images.html',
                            paginator=pagination,
                            album=album,
-                           keywords=kw
+                           keywords=keyword_array
                            )
 
 
@@ -87,11 +98,8 @@ def album_save(album_id):
         album.selected_only = form_data['selected_only']
         album.save()
 
-        for kw in form_data['included']:
-            album.add_keyword(kw, 1)
+        album.update_keywords(form_data['keywords'])
 
-        for kw in form_data['excluded']:
-            album.add_keyword(kw, 2)
 
     return jsonify({'status': 'ok'})
 
@@ -102,7 +110,7 @@ def collection(page):
     perPage = 10
     data = Album.select()
     pagination = Pagination(page, perPage, data.count())
-    #data = data[pagination.min_rec:pagination.max_rec]
+
 
     return render_template('album_list.html', data=data, paginator=pagination)
 

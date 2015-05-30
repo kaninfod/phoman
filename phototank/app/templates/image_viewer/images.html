@@ -4,22 +4,20 @@
 
 {% block content %}
 
-
-<link rel="stylesheet" href="/static/css/images.css">
-
 <div class="container">
     <div class="row">
+        {% include 'image_viewer/typeahead.html' %}
 
+    </div>
 
+    <div class="row">
 
-        <div id="image-list" class="col-md-11">
-            {% include 'image_viewer/Image_grid.html' %}
-            {{ paginatorx.render_pagination(paginator) }}
-        </div>
+        <div id="image-list" class="col-md-12">
+            {% include 'image_viewer/image_grid.html' %}
 
-
-        <div class="col-md-1">
-            {% include 'image_viewer/keyword_panel.html' %}
+            <div class="col-md-3 col-md-offset-5">
+                {{ paginatorx.render_pagination(paginator) }}
+            </div>
         </div>
 
     </div>
