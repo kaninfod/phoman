@@ -1,7 +1,10 @@
 from peewee import *
 from phototank.app import db
-
+from geopy.distance import great_circle
 from datetime import datetime
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
+import math
 
 
 class Location(db.Model):
@@ -16,6 +19,124 @@ class Location(db.Model):
     city = TextField(null=True)
     suburb = TextField(null=True)
     postcode = TextField(null=True)
+
+    def lookup_location(self):
+        # Image location statuses:
+        #   -2 : no gps data available
+        #   -1 : gps data available but lookup unsuccessful
+        #   0  : gps data available but no lookup attempted
+        #   1  : gps data available and lookup successful
+
+
+        # app.logger.name = "lookup location"
+        if not self.status == -2:
+
+            geolocator = Nominatim(timeout=4)
+
+            point = "%s,%s" % (self.latitude, self.longitude)
+            #app.logger.debug("Looking up %s" % self.id)
+            loc = None
+            try:
+                loc = geolocator.reverse(point)
+            except GeocoderTimedOut as e:
+                #app.logger.warning(e)
+                self.status = -1
+                self.save()
+                return -1
+            except Exception as e:
+                #app.logger.warning(e)
+                self.status = -1
+                self.save()
+                return -1
+            else:
+                if "error" in loc.raw:
+                    #app.logger.warning(loc.raw["error"])
+                    self.status = -1
+                    self.save()
+                    return -1
+                elif "address" in loc.raw:
+                    if "country" in loc.raw["address"]:
+                        self.country = loc.raw["address"]['country']
+                        #app.logger.debug("success getting country")
+
+                    if "state" in loc.raw["address"]:
+                        self.state = loc.raw["address"]['state']
+                        #app.logger.debug("success getting state")
+
+                    if "city" in loc.raw["address"]:
+                        self.city = loc.raw["address"]['city']
+                        #app.logger.debug("success getting city")
+
+                    if "suburb" in loc.raw["address"]:
+                        self.suburb = loc.raw["address"]['suburb']
+                        #app.logger.debug("success getting suburb")
+
+                    if "postcode" in loc.raw["address"]:
+                        self.postcode = loc.raw["address"]['postcode']
+                        #app.logger.debug("success getting postcode")
+
+                    if "road" in loc.raw["address"]:
+                        self.road = loc.raw["address"]['road']
+                        #app.logger.debug("success getting road")
+
+                    self.address = loc.raw['display_name']
+
+
+                    #app.logger.info("success getting one or more location entities")
+                    self.status = 1
+                    self.save()
+                    return 1
+                else:
+                    #app.logger.info("no location returned")
+                    self.status = -1
+                    self.save()
+                    return -1
+
+        else:
+            pass
+            #app.logger.debug("No coordinates, id: %s" % self.id)
+
+
+    def getpoint(self, lat, lon):
+        min_dist_between_locations = 50
+        offset_lat = 0.00005
+        offset_lon = 0.000066
+
+        close_to_locations = self.select() \
+            .where( ( (Location.latitude.between(lat-offset_lat, lat+offset_lat)) | \
+                      (Location.longitude.between(lon-offset_lon, lon+offset_lon))) )
+
+        if not close_to_locations.count() == 0:
+            dist_to_closest_location = min_dist_between_locations
+            loc = self
+            for location in close_to_locations:
+                location1 = (lat,lon)
+                location2 = (location.latitude, location.longitude)
+                dist = great_circle(location1,location2)
+
+                if dist.m < dist_to_closest_location:
+                    loc = location
+                    dist_to_closest_location = dist.m
+
+
+            if dist_to_closest_location <= min_dist_between_locations:
+                return loc.id
+
+            else:
+                return False
+
+
+        else:
+            self.latitude = lat
+            self.longitude = lon
+            self.save()
+            self.lookup_location()
+
+            return self.id
+
+
+
+
 
 class Keyword(db.Model):
     value = TextField(null=True)
@@ -65,7 +186,9 @@ class Photo(db.Model):
     orientation = IntegerField(null=True)
     flash_fired = IntegerField(null=True)
     image_hash = TextField(null=True)
-    location = ForeignKeyField(rel_model=Location, related_name="photos")
+    latitude = FloatField(null=True)
+    longitude = FloatField(null=True)
+    location = ForeignKeyField(rel_model=Location, related_name="photos", null=True)
 
     file_name = TextField(null=True)
     file_original_subpath = TextField(null=True)
@@ -98,7 +221,10 @@ class Photo(db.Model):
             except Keyword.DoesNotExist:
                 kw = Keyword.create(category=category, subcategory=subcategory, sortorder=sortorder, value=value)
 
-            m = PhotoKeyword.create(keyword=kw, photo=self)
+            try:
+                map = PhotoKeyword.get(PhotoKeyword.keyword==kw, PhotoKeyword.photo==self)
+            except PhotoKeyword.DoesNotExist:
+                map = PhotoKeyword.create(keyword=kw, photo=self)
 
 
 
@@ -142,30 +268,25 @@ class Photo(db.Model):
         if self.file_size >= 3600000:
             append_tag(category, "Size", 3, "Large File")
 
+        if self.location:
+            category = "Places"
+            if self.location.country:
+                append_tag(category, "Country", 0, self.location.country)
 
-        category = "Places"
-        if self.location.country:
-            append_tag(category, "Country", 0, self.location.country)
+            if self.location.state:
+                append_tag(category, "State", 1, self.location.state)
 
-        if self.location.state:
-            append_tag(category, "State", 1, self.location.state)
+            if self.location.city:
+                append_tag(category, "City", 2, self.location.city)
 
-        if self.location.city:
-            append_tag(category, "City", 2, self.location.city)
-
-        if self.location.suburb:
-            append_tag(category, "Suburb", 3, self.location.suburb)
-
-        if not self.location.status == 1:
+            if self.location.suburb:
+                append_tag(category, "Suburb", 3, self.location.suburb)
+        else:
             append_tag(category, "Location", 4, "No Location")
 
 class PhotoKeyword(db.Model):
     photo = ForeignKeyField(Photo)
     keyword = ForeignKeyField(Keyword)
 
-for table in [Photo, Location, Keyword, PhotoKeyword]:
-    try:
-        table.create_table()
-    except Exception as e:
-        print(e)
+
 

@@ -123,8 +123,3 @@ class AlbumKeyword(db.Model):
     type = IntegerField(null=True)
 
 
-for table in [Album, AlbumKeyword]:
-    try:
-        table.create_table()
-    except Exception as e:
-        print(e)

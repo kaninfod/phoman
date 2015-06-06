@@ -53,11 +53,14 @@ class ImageHelper():
             self._add_exif_data(img, "Orientation", "orientation")
             self._add_exif_data(img, "Flash", "flash_fired")
 
-            img.location.latitude, img.location.longitude = self.get_lat_lon(img.exif)
-            if not img.location.latitude or not img.location.longitude:
-                img.location.status = -2
-            else:
-                img.location.status = 0
+
+
+            #img.location.latitude, img.location.longitude = self.get_lat_lon(img.exif)
+
+            #if not img.location.latitude or not img.location.longitude:
+            #    img.location.status = -2
+            #else:
+            #    img.location.status = 0
 
             exif_date_fields = ["DateTimeOriginal", "DateTime"]
             for date_field in exif_date_fields:
@@ -134,7 +137,7 @@ class ImageHelper():
         return d + (m / 60.0) + (s / 3600.0)
 
 
-    def get_lat_lon(self, exif_data):
+    def get_lat_lon(self):
         """Returns the latitude and longitude, if available, from the provided exif_data (obtained through get_exif_data above)"""
         lat = None
         lon = None

@@ -20,7 +20,7 @@ def home():
 
     ph = Photo().select()
 
-    return render_template('panel.html')
+    return render_template('home.html')
 
 @app.route('/keywords')
 def keywords():

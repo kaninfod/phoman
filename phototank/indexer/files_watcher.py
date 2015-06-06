@@ -54,15 +54,23 @@ def index_jpeg_file(input_file_path):
     input_file, input_ext = os.path.splitext(input_file)
 
     # get basic file information and populate the image object
-    photo = Photo() #img = Photo(input_file_path)
-    location = Location.create(status=-2)
-    photo.location = location
-    photo.index_helper = ImageHelper(input_file_path) #img.index_helper = ImageHelper(input_file_path)
+    photo = Photo()
+    photo.index_helper = ImageHelper(input_file_path)
+
+    #set location
+    lat, lon = photo.index_helper.get_lat_lon()
+    if lat and lon:
+        l = Location()
+        photo.location = l.getpoint(lat, lon)
+
+        photo.latitude = lat
+        photo.longitude = lon
+    else:
+        photo.location = None
     photo.image_hash = photo.index_helper.get_image_hash()
     try:
         existing_photo = Photo.get(Photo.image_hash==photo.image_hash )
     except Photo.DoesNotExist:
-
 
         photo.file_size = os.path.getsize(input_file_path)
         photo.file_extension = input_ext.lower()
@@ -93,7 +101,6 @@ def index_jpeg_file(input_file_path):
             paths = photo.index_helper.generate_files(dest_path, photo.file_name, photo.file_extension)
             photo.file_large_path, photo.file_medium_path, photo.file_thumb_path = paths
 
-        location.save()
         photo.save()
         photo.set_tags()
 
@@ -102,7 +109,7 @@ def index_jpeg_file(input_file_path):
         #path = new_image_file_handler(photo, input_file_path)
         return photo
     else:
-        pass
+        app.logger.debug("Photo exists in DB: %s" % photo.file_original_path)
 
 def new_image_file_handler(photo, soruce_file):
 
@@ -247,7 +254,31 @@ def set_keywords():
         except Exception as e:
             app.logger.critical("failed setting tags: %s" % photo.id)
 
-if __name__ == "__main__":
+def reindex_photos():
+    photos = Photo.select()
+    for photo in photos:
+        print(photo.id)
+        photo.set_tags()
 
-        file_watcher()
+
+
+def reindex_locations():
+    photos = Photo.select(Photo.location==-1)
+    for p in photos:
+        app.logger.debug("do: %s" % (p.id))
+        path = p.file_original_path
+        ih = ImageHelper(path)
+        lat, lon = ih.get_lat_lon()
+        if lat and lon:
+            l = Location()
+            p.location = l.getpoint(lat, lon)
+
+            p.latitude = lat
+            p.longitude = lon
+            p.save()
+            app.logger.debug("added %s, %s" % (p.latitude, p.longitude))
+
+if __name__ == "__main__":
+    reindex_locations()
+    #file_watcher()
 

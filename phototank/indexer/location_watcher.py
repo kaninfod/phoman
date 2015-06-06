@@ -3,13 +3,13 @@ __author__ = 'hingem'
 from phototank.app import app
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
-from phototank.model.photo import Location
+from phototank.model.photo import Location, Photo, Keyword
 
 def lookup_location(location):
     # Image location statuses:
     #   -2 : no gps data available
     #   -1 : gps data available but lookup unsuccessful
-    #   0  : gps d  ata available but no lookup attempted
+    #   0  : gps data available but no lookup attempted
     #   1  : gps data available and lookup successful
 
 
@@ -26,15 +26,18 @@ def lookup_location(location):
         except GeocoderTimedOut as e:
             app.logger.warning(e)
             location.status = -1
+            location.save()
             return -1
         except Exception as e:
             app.logger.warning(e)
             location.status = -1
+            location.save()
             return -1
         else:
             if "error" in loc.raw:
                 app.logger.warning(loc.raw["error"])
                 location.status = -1
+                location.save()
                 return -1
             elif "address" in loc.raw:
                 if "country" in loc.raw["address"]:
@@ -66,24 +69,26 @@ def lookup_location(location):
 
                 app.logger.info("success getting one or more location entities")
                 location.status = 1
+                location.save()
                 return 1
             else:
                 app.logger.info("no location returned")
                 location.status = -1
+                location.save()
                 return -1
 
     else:
         app.logger.debug("No coordinates, id: %s" % location.id)
 
 
-def location_watcher():
-    locations = Location.select().where(Location.status==0) #app.db.get_photos({'location.status':0})
 
+
+def location_watcher():
+    locations = Location.select() #app.db.get_photos({'location.status':0})
     for location in locations:
-        #photo = Photo(p)
-        #ih = ImageHelper(photo.files.original_path)
         lookup_location(location)
-        location.save()
+
+
 
 if __name__ == "__main__":
     location_watcher()
