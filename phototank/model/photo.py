@@ -129,6 +129,7 @@ class Location(db.Model):
         else:
             self.latitude = lat
             self.longitude = lon
+
             self.save()
             self.lookup_location()
 

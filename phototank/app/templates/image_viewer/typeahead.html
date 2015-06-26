@@ -1,35 +1,69 @@
-
-{% block content %}
-
 <style>
 
+#slidemenu {
+    position: absolute;
+    right: 0px;
+    height: 100%;
+    width: 300px;
+    z-index: 5;
+    background-color: #6b696c;
+    display: none;
 
+}
+
+#keywordsInAlbum {
+    padding: 5px;
+    margin: 8px;
+
+}
+
+
+
+#slidemenu > div:nth-child(1) > div {
+    margin: 8px;
+
+}
+
+#menu-button {
+    position: absolute;
+    top: 100px;
+    right: -25px;
+    height: 20px;
+    width: 70px;
+    padding: 3px;
+    z-index: 4;
+
+    background-color: #0b79e5;
+}
 
 </style>
 
+<div id="menu-button">
+    show
+</div>
+
+<div id="slidemenu" class="container">
 
 
 
-    <div class="col-md-4">
-        <div class="input-group">
-            <div class="input-group-btn">
-                <button id="keywordAction" keyword-action="1" type="button" class="btn btn-success dropdown-toggle" label-class="label-success" data-toggle="dropdown" aria-expanded="false">Include<span class="caret"></span></button>
-                <ul class="dropdown-menu" role="menu">
-                    <li ><a href="#" btn-text="Include" id="included">Include</a></li>
-                    <li ><a href="#" btn-text="Exclude" id="excluded">Exclude</a></li>
-                </ul>
+        <div class="row">
+            <div class="input-group">
+                <div class="input-group-btn">
+                    <button id="keywordAction" keyword-action="1" type="button" class="btn btn-success dropdown-toggle" label-class="label-success" data-toggle="dropdown" aria-expanded="false">Include<span class="caret"></span></button>
+                    <ul class="dropdown-menu" role="menu">
+                        <li ><a href="#" btn-text="Include" id="included">Include</a></li>
+                        <li ><a href="#" btn-text="Exclude" id="excluded">Exclude</a></li>
+                    </ul>
+                </div>
+                <input type="text" id="keywordInput" class="form-control">
             </div>
-            <input type="text" id="keywordInput" class="form-control">
         </div>
-    </div>
+        <div class="row"
+            <h4><div id="keywordsInAlbum" style="background-color: #ffffff"></div></h4>
+        </div>
 
-    <div class="col-md-4">
-        <h4><div id="keywordsInAlbum" style="background-color: #ffffff"></div></h4>
-    </div>
 
+</div>
 <script>
 keywords_in_album = {{ keywords|safe }}
 </script>
-
-{% endblock %}
-

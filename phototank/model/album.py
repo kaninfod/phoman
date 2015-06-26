@@ -42,9 +42,11 @@ class Album(db.Model):
             photos_include = Photo.select().join(PhotoKeyword, on=PhotoKeyword.photo).where((PhotoKeyword.keyword.in_(include)))
         else:
             photos_include = Photo.select()
-        photos_exclude = Photo.select().join(PhotoKeyword, on=PhotoKeyword.photo).where((PhotoKeyword.keyword.in_(exclude)))
-        photos = (photos_include - photos_exclude).distinct().order_by(SQL('date_taken'))
+        if len(exclude):
+            photos_exclude = Photo.select().join(PhotoKeyword, on=PhotoKeyword.photo).where((PhotoKeyword.keyword.in_(exclude)))
+            photos = (photos_include - photos_exclude).distinct().order_by(SQL('date_taken'))
 
+        photos = photos_include.order_by(SQL('date_taken'))
         self.photo_count = photos.count()
         return photos
 

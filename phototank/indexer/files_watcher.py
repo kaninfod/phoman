@@ -83,7 +83,7 @@ def index_jpeg_file(input_file_path):
             return 0
 
         #generate new filename from exif date
-        photo.file_name = get_filename_from_date(photo.date_taken)
+        photo.file_name = photo.image_hash # get_filename_from_date(photo.date_taken)
 
         # set basic paths
         photo.file_original_subpath = get_path_from_date(app.config["IMAGE_STORE"], photo.date_taken)
@@ -279,6 +279,6 @@ def reindex_locations():
             app.logger.debug("added %s, %s" % (p.latitude, p.longitude))
 
 if __name__ == "__main__":
-    reindex_locations()
-    #file_watcher()
+
+    file_watcher()
 

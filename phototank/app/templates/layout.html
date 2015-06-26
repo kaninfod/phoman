@@ -18,8 +18,7 @@
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/jquery-ui.min.js"></script>
     <script src="/static/js/modernizr.js"></script> <!-- Modernizr -->
-
-    <script src="/static/js/jquery.drawer.js"></script>
+    <script src="/static/js/jquery.jpanelmenu.js"></script>
 
 
 <!--CSS -->
@@ -30,7 +29,9 @@
   </head>
 
   <body>
-
+    <div id="menux" >
+        {% include 'image_viewer/typeahead.html' %}
+    </div>
     <!-- Fixed navbar -->
     <nav class="navbar navbar-default navbar-fixed-top">
       <div class="container">
@@ -48,13 +49,13 @@
             <li class="active"><a href="/album/list">Albums</a></li>
             <li><a href="/image/album/new">All Images</a></li>
 
-			<li><a href="#" id="secondary-menu-toggle" class="menu-toggle">right</a></li>
+			<li><a href="#" id="menu-toggle" class="menu-trigger">right</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
-    <div id="" class="container-fluid">
+    <div id="" class="container">
 
 
         {% with messages = get_flashed_messages() %}
@@ -69,7 +70,7 @@
 
         {% block content %}        {% endblock %}
 
-        {% include 'panel.html' %}
+
     </div> <!-- /container -->
 
 

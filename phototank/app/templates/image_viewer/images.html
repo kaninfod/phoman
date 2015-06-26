@@ -5,17 +5,15 @@
 {% block content %}
 
 <div class="container">
-    <div class="row">
-        {% include 'image_viewer/typeahead.html' %}
 
-    </div>
+
 
     <div class="row">
 
         <div id="image-list" class="col-md-12">
             {% include 'image_viewer/image_grid.html' %}
 
-            <div class="col-md-3 col-md-offset-5">
+            <div class="col-md-5 col-md-offset-4">
                 {{ paginatorx.render_pagination(paginator) }}
             </div>
         </div>
@@ -23,6 +21,12 @@
     </div>
 
 </div>
+
+
+
+
+
+
 
 
 <div id="mymodal" class="modal fade">

@@ -3,23 +3,29 @@
  */
 
 
+    var jPM = $.jPanelMenu({
+        menu: '#menu',
+        trigger: '.menu-trigger',
+        duration: 300,
+        direction: 'right',
+        openPosition: '450px',
+        excludedPanelContent: '.navbar'
+    });
+    //jPM.on();
+
+
+
+
 $(document).ready(function() {
 
-    $('#right-panel-link').click({
-        side: 'right',
-        clickClose: false,
-        duration: 600,
-        easingOpen: 'easeInBack',
-        easingClose: 'easeOutBack'
-        });
-
-    $('#close-panel-bt').click(function() {
-      $.panelslider.close();
+    $("#menu-toggle").click(function(){
+        console.log("shoew")
+        $("#slidemenu").fadeToggle("slow");
     });
 
 
     //Initiate the autocomplete element
-    $( "#keywordInput" ).autocomplete({
+    var keywordList = $( "#keywordInput" ).autocomplete({
         source: "/keywords",
         minLength: 2,
         select: function( event, ui ) {
@@ -33,7 +39,15 @@ $(document).ready(function() {
             $(this).val('');
             return false;
           }
-    });
+    })
+
+
+
+
+
+
+
+
 
     //when page reloads, all keywords in album should get added to keyword box
     $.each( keywords_in_album, function( key, obj ) {

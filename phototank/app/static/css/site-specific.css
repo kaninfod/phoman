@@ -1,7 +1,7 @@
 body {
     padding-top: 70px;
-    height:700px;
-    background-color: #840c15;
+    height:900px;
+    background-color: #636164;
     padding-bottom: 40px;
     padding-top: 60px;
 }
@@ -71,13 +71,6 @@ body {
   background-color: #18842a;
 }
 
-
-
-.sidebar-nav-fixed {
-	width:30%;
-}
-
-
 /* typeahead */
 #keywordsInAlbum > span {
     margin-left: 2px;
@@ -93,9 +86,6 @@ body {
     cursor: pointer;
 }
 
-
-
-
 .container, .content {
 	position: relative;
 }
@@ -110,29 +100,4 @@ body {
 	overflow: auto;
 	background: #fff;
 }
-
-.menu {
-	position: absolute;
-	top: 70px;
-	z-index: 0;
-	width: 25%;
-	background: #0b79e5;
-	visibility: hidden;
-	opacity: 0;
-}
-
-.menu-left {
-	left: 0;
-}
-
-.menu-right {
-	right: 0;
-}
-
-.menu-open {
-	visibility: visible;
-	opacity: 1;
-}
-
-
 

@@ -141,7 +141,8 @@ class ImageHelper():
         """Returns the latitude and longitude, if available, from the provided exif_data (obtained through get_exif_data above)"""
         lat = None
         lon = None
-
+        if not self.exif:
+            return False, False
         if "GPSInfo" in self.exif:
             gps_info = self.exif["GPSInfo"]
 

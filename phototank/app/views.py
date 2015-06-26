@@ -45,7 +45,13 @@ def imagestore(image_id, size):
             path = photo.file_large_path
         elif size == "original":
             path = photo.file_original_subpath
-    return send_file(path)
+
+    if os.path.exists(path):
+        return send_file(path)
+    else:
+        APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+        APP_STATIC = os.path.join(APP_ROOT, 'static/img/img_not_found.jpg')
+        return send_file(APP_STATIC)
 
 
 @app.route('/image/<size>/<id>')
@@ -69,13 +75,14 @@ def images(album_id, page):
                 #db.delete_album(session["temp_album"], {'name': '__temp__'})
         session["temp_album"] = album.id
         return redirect("/image/album/" + str(album.id))
-    print(time.clock() - cl)
+
     album = Album.get(Album.id==album_id)
     keyword_array = album.keywords()
 
     print(time.clock() - cl)
-    perPage = 27
+    perPage = 32
     pagination = Pagination(page, perPage, album.photo_count)
+    print(time.clock() - cl)
     album.paginator = pagination
 
     print(time.clock() - cl)
