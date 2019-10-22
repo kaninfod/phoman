@@ -11,7 +11,7 @@ itsdangerous==0.24
 Jinja2==2.7.3
 lockfile==0.10.2
 MarkupSafe==0.23
-Pillow==2.7.0
+Pillow==6.2.0
 pymongo==2.8
 python-memcached==1.54
 pytz==2015.2
